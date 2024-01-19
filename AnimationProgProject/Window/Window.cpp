@@ -43,7 +43,29 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 		return 0;
 	}
 	// Get OpenGL context and set it to current thread to have access to global state for rendering (Remove for vulkan since it need no context)
-	//glfwMakeContextCurrent(mWindow);
+	glfwMakeContextCurrent(mWindow);
+
+
+	// Associates any type of pointer (in this case the this pointer) to a window
+	glfwSetWindowUserPointer(mWindow, this);
+
+	// Creating a callback using a lambda function "[]" so that when the window closes the handle Window close event runs
+	glfwSetWindowCloseCallback(mWindow, [](GLFWwindow* win) {
+		auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
+		thisWindow->handleWindowCloseEvents();
+	});
+
+	// Creating a callback function for keyboard events
+	glfwSetKeyCallback(mWindow, [](GLFWwindow* win, int key, int scancode, int action, int mods) {
+		auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
+		thisWindow->handleKeyEvents(key, scancode, action, mods);
+		});
+
+	// Creating a callback function for mouse button events
+	glfwSetMouseButtonCallback(mWindow, [](GLFWwindow* win, int button, int action, int mods) {
+		auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
+		thisWindow->handleMouseButtonEvents(button, action, mods);
+		});
 
 
 	Logger::log(1, "%s: Window was successfully initialized.\n", __FUNCTION__);
@@ -143,8 +165,6 @@ bool Window::initVulkan() {
 	return true;
 }
 
-
-
 void Window::mainLoop() {
 
 	// Check wether window is initialized
@@ -203,4 +223,72 @@ void Window::cleanup() {
 	glfwDestroyWindow(mWindow);
 
 	glfwTerminate();
+}
+
+void Window::handleWindowCloseEvents() {
+	Logger::log(1, "%s: Window got close event... bye!\n", __FUNCTION__);
+}
+
+void Window::handleKeyEvents(int key, int scancode, int action, int mods) {
+	std::string actionName;
+
+	switch (action) {
+	case GLFW_PRESS:
+		actionName = "Pressed";
+		break;
+
+	case GLFW_RELEASE:
+		actionName = "Released";
+		break;
+	
+	case GLFW_REPEAT:
+		actionName = "Held";
+		break;
+	
+	default:
+		actionName = "Invalid";
+		break;
+	}
+	const char* keyName = glfwGetKeyName(key,0);
+	Logger::log(1, " %s : key %s (key %i, scancode %i ) %s.\n", __FUNCTION__, keyName, key, scancode, actionName.c_str());
+}
+
+void Window::handleMouseButtonEvents(int button, int action, int mods) {
+	std::string buttonName;
+	std::string actionName;
+
+	switch (action) {
+
+	case GLFW_PRESS:
+		actionName = "Pressed";
+		break;
+
+	case GLFW_RELEASE:
+		actionName = "Released";
+		break;
+
+	default:
+		actionName = "Invalid";
+		break;
+	}
+
+	switch (button) {
+	
+	case GLFW_MOUSE_BUTTON_LEFT:
+		buttonName = "Left button";
+		break;
+
+	case GLFW_MOUSE_BUTTON_RIGHT:
+		buttonName = "Right button";
+		break;
+
+	case GLFW_MOUSE_BUTTON_MIDDLE:
+		buttonName = "Middle button";
+		break;
+
+	default:
+		buttonName = "Other button";
+		break;
+	}
+	Logger::log(1, "%s: %s mouse (%i) %s\n",__FUNCTION__, buttonName.c_str(), button,actionName.c_str());
 }

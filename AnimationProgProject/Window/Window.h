@@ -20,6 +20,9 @@ class Window {
 		// Preforms cleanup to shut down the application properly
 		void cleanup();
 
+		
+
+
 	private:
 
 		// Reference to the GLFW window
@@ -31,7 +34,25 @@ class Window {
 		// Handle for Vulkan instance (Stores info about Vulkan settings for current application)
 		VkInstance mInstance{};
 
-		// Hnalde for Vulkan Surface (The drawable "Surface")
+		// Handle for Vulkan Surface (The drawable "Surface")
 		VkSurfaceKHR mSurface{};
 
-};			
+		// To handle window close 
+		void handleWindowCloseEvents();
+
+		// To handle Keyboard events
+		// @param key - acsii code
+		// @param scancode - system-specific code
+		// @param action - press,release,repeat(hold)
+		// @param mods - shift,ctrl etc.
+		void handleKeyEvents(int key, int scancode, int action, int mods);
+
+
+		// To handle mouse button events
+		// @param button - left,right,middle ect.
+		// @param action - pressed,released
+		// @param mods - shift,ctrl etc.
+		void handleMouseButtonEvents(int button, int action, int mods);
+
+};		
+
