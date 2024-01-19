@@ -8,8 +8,9 @@ class Logger {
 		// If log level is greater current LogLevel then logs will be suppressed
 		template<typename... Args>
 		static void log(unsigned int logLevel, Args... args) {
-			if (logLevel < mLogLevel) {
+			if (logLevel <= mLogLevel) {
 				std::printf(args ...);
+				//std::fflush(stdout);
 			}
 		}
 
