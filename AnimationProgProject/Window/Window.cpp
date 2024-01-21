@@ -6,14 +6,14 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 
 	// If failed to init glfw
 	if (!glfwInit()) {
-		Logger::log(1, "%s: glfwInit() Error.\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - glfwInit() failed.\n", __FUNCTION__);
 		return false;
 	}
 
 	// If no vulkan support
 	if (!glfwVulkanSupported()) {
 		glfwTerminate();
-		Logger::log(1, "%s: Vulkan is not supported.\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - Vulkan is not supported.\n", __FUNCTION__);
 		return false;
 	}
 
@@ -31,7 +31,7 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 	// If window creation failed then terminate and exit
 	if (!mWindow) {
 	
-		Logger::log(1, "%s: Could not create window.\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - Could not create window.\n", __FUNCTION__);
 		glfwTerminate();
 		return false;
 	}
@@ -39,7 +39,7 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 	// If vulkan init failed 
 	if (!initVulkan()) {
 		glfwTerminate();
-		Logger::log(1, "%s: Could not initialize Vulkan.\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - Could not initialize Vulkan.\n", __FUNCTION__);
 		return 0;
 	}
 	// Get OpenGL context and set it to current thread to have access to global state for rendering (Remove for vulkan since it need no context)
@@ -96,7 +96,7 @@ bool Window::initVulkan() {
 
 	// if not extensions found
 	if (extensionCount == 0) {
-		Logger::log(1, "%s: Error - No vulkan extensions found.\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - No vulkan extensions found.\n", __FUNCTION__);
 		return false;
 	}
 
@@ -129,7 +129,7 @@ bool Window::initVulkan() {
 
 	// if failed to create instance
 	if ( result != VK_SUCCESS) {
-		Logger::log(1, "%s: Could not create Instance(% i)\n", __FUNCTION__, result);
+		Logger::log(0, "%s: Error - Could not create Instance(% i)\n", __FUNCTION__, result);
 		return false;
 	}
 
@@ -140,7 +140,7 @@ bool Window::initVulkan() {
 
 	// if no supported GPUs found
 	if (physicalDeviceCount == 0) {
-		Logger::log(1, "%s: Error - No vulkan capable GPU found\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - No vulkan capable GPU found\n", __FUNCTION__);
 		return false;
 	}
 
@@ -158,7 +158,7 @@ bool Window::initVulkan() {
 
 	// if surface failed to be created
 	if(result != VK_SUCCESS) {
-		Logger::log(1, "%s: Could not create Vulkan surface\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - Could not create Vulkan surface\n", __FUNCTION__);
 		return false;
 	}
 
@@ -169,7 +169,7 @@ void Window::mainLoop() {
 
 	// Check wether window is initialized
 	if (!mWindow) {
-		Logger::log(1, "%s: No window initialized. try calling the init method first.\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - No window initialized. try calling the init method first.\n", __FUNCTION__);
 		return;
 	}
 
@@ -178,7 +178,7 @@ void Window::mainLoop() {
 
 	float color = 0.0f;
 
-
+	Logger::log(1, "%s: Starting window loop...\n", __FUNCTION__);
 	// While the user has not generated the close window event.
 	while (!glfwWindowShouldClose(mWindow)) {
 		
@@ -196,20 +196,18 @@ void Window::mainLoop() {
 
 		// Poll events to react to anything that happens to the window. (Inputs, Button presses etc.)
 		glfwPollEvents();
- 
-
-
 	}
+
+	Logger::log(1, "%s: Window loop ended.\n", __FUNCTION__);
 }
 
 void Window::cleanup() {
 
 	// Check wether window is initialized
 	if (!mWindow) {
-		Logger::log(1, "%s: No window initialized. Try calling the init method first.\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - No window initialized. Try calling the init method first.\n", __FUNCTION__);
 		return;
 	}
-
 
 	Logger::log(1, "%s: Terminating Window.\n",__FUNCTION__);
 

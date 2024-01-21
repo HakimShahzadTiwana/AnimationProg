@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 
 	// Try to initialize window.
 	if (!w->init(640, 480, "First Window")) {
-		Logger::log(1, "%s: Error - Window init Error.\n", __FUNCTION__);
+		Logger::log(0, "%s: Error - Window init Error.\n", __FUNCTION__);
 		return -1;
 	}
 

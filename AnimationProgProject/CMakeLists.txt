@@ -25,7 +25,7 @@ endif()
 project ("AnimationProgProject")
 
 # Add source to this project's executable 
-add_executable (AnimationProgProject "AnimationProgProject.cpp" "AnimationProgProject.h" "Window/Window.cpp" "Window/Window.h" "Logger/Logger.h" "Logger/Logger.cpp")
+add_executable (AnimationProgProject "AnimationProgProject.cpp" "AnimationProgProject.h" "Window/Window.cpp" "Window/Window.h" "Logger/Logger.h" "Logger/Logger.cpp" "src/glad.c" "include/glad/glad.h" "include/KHR/khrplatform.h" "opengl/MainRenderer/OGLRenderer.cpp" "opengl/MainRenderer/OGLRenderer.h" "opengl/MainRenderer/OGLRenderData.h" "opengl/Buffers/FrameBuffer/FrameBuffer.h" "opengl/Buffers/FrameBuffer/FrameBuffer.cpp" "opengl/Buffers/VertexBuffer/VertexBuffer.h" "opengl/Buffers/VertexBuffer/VertexBuffer.cpp")
 
 
 # Finds the glfw library and marks as required 
@@ -48,6 +48,9 @@ target_link_libraries(AnimationProgProject ${GLFW3_LIBRARY} OpenGL::GL)
 # add for Vulkan
 find_package(Vulkan REQUIRED)
 target_link_libraries(AnimationProgProject ${GLFW3_LIBRARY} Vulkan::Vulkan)
+
+# add for glad loader
+target_include_directories(AnimationProgProject PUBLIC include src window tools opengl model)
 
 
 ##Template code that i dont think i need
