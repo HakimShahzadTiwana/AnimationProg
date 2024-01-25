@@ -3,8 +3,8 @@
 
 #include "AnimationProgProject.h"
 #include <memory>
-#include "Window/Window.h"
-#include "Logger/Logger.h"
+#include "window/Window.h"
+#include "logger/Logger.h"
 
 using namespace std;
 

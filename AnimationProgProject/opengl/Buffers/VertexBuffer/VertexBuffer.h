@@ -18,10 +18,10 @@ class VertexBuffer {
 		// @param vertexData - Data to copy to buffer
 		void uploadData(OGLMesh vertexData);
 
-		// Enables drawing to vertex buffer (For when we want to use multiple buffers and avoid any unexpected results)
+		// Enables modifications to the vertex buffer (For when we want to use multiple buffers and avoid any unexpected results)
 		void bind();
 
-		// Disables drawing to vertex buffer (For when we want to use multiple buffers and avoid any unexpected results)
+		// Disables modifications to the vertex buffer (For when we want to use multiple buffers and avoid any unexpected results)
 		void unbind();
 
 		// Draws the currently bound vertex array (by sending it to the gpu)

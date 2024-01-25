@@ -2,7 +2,11 @@
 
 #include <string>
 // Note : Vulkan include has to be before GLFW so that GLFW can detect Vulkan
-#include <vulkan/vulkan.h>
+
+#include <memory>
+#include "./mainRenderer/OGLRenderer.h"
+#include "../models/Model.h"
+//#include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
 
@@ -32,17 +36,20 @@ class Window {
 		std::string mApplicationName;
 
 		// Handle for Vulkan instance (Stores info about Vulkan settings for current application)
-		VkInstance mInstance{};
+		//VkInstance mInstance{};
 
 		// Handle for Vulkan Surface (The drawable "Surface")
-		VkSurfaceKHR mSurface{};
+		//VkSurfaceKHR mSurface{};
+
+		std::unique_ptr<OGLRenderer> mRenderer;
+		std::unique_ptr<Model> mModel;
 
 		// To handle window close 
 		void handleWindowCloseEvents();
 
 		// To handle Keyboard events
-		// @param key - acsii code
-		// @param scancode - system-specific code
+		// @param key - ASCII code
+		// @param scanCode - system-specific code
 		// @param action - press,release,repeat(hold)
 		// @param mods - shift,ctrl etc.
 		void handleKeyEvents(int key, int scancode, int action, int mods);

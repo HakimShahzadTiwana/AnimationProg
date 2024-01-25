@@ -12,10 +12,10 @@
 // Lib for window operations (make sure after glad lib since it detects and changes based on glad)
 #include <GLFW/glfw3.h>
 
-#include "Framebuffer.h"
-#include "VertexBuffer.h"
-#include "Texture.h"
-#include "Shader.h"
+#include "./buffers/frameBuffer/FrameBuffer.h"
+#include "./buffers/vertexBuffer/VertexBuffer.h"
+#include "./textures/Texture.h"
+#include "./shaders/Shader.h"
 
 #include "OGLRenderData.h"
 

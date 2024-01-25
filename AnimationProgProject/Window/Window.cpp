@@ -18,12 +18,16 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 	}
 
 	// Setting properties or "Hints" for the next window to be created.
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	// glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
 
+	
 	mApplicationName = title;
 
 	// Vulkan needs no context
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	// glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 	// Try to create window
 	mWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
@@ -45,6 +49,16 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 	// Get OpenGL context and set it to current thread to have access to global state for rendering (Remove for vulkan since it need no context)
 	glfwMakeContextCurrent(mWindow);
 
+	mRenderer = std::make_unique<OGLRenderer>();
+
+	if (!mRenderer->init(width, height)) {
+
+		Logger::log(0, "%s: Error - Could not init Renderer.\n", __FUNCTION__);
+
+		glfwTerminate();
+
+		return false;
+	}
 
 	// Associates any type of pointer (in this case the this pointer) to a window
 	glfwSetWindowUserPointer(mWindow, this);
@@ -59,14 +73,26 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 	glfwSetKeyCallback(mWindow, [](GLFWwindow* win, int key, int scancode, int action, int mods) {
 		auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
 		thisWindow->handleKeyEvents(key, scancode, action, mods);
-		});
+	});
 
 	// Creating a callback function for mouse button events
 	glfwSetMouseButtonCallback(mWindow, [](GLFWwindow* win, int button, int action, int mods) {
 		auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
 		thisWindow->handleMouseButtonEvents(button, action, mods);
-		});
+	});
 
+
+	// Set user pointer to renderer for resizing
+	glfwSetWindowUserPointer(mWindow, mRenderer.get());
+
+	// Resizing window sends callback to renderer to set new size
+	glfwSetWindowSizeCallback(mWindow, [](GLFWwindow* win, int width, int height) {
+		auto renderer = static_cast<OGLRenderer*>(glfwGetWindowUserPointer(win));
+		renderer->setSize(width, height);
+	});
+	
+	mModel = std::make_unique<Model>();
+	mModel->init();
 
 	Logger::log(1, "%s: Window was successfully initialized.\n", __FUNCTION__);
 	return true;
@@ -74,7 +100,7 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 }
 
 bool Window::initVulkan() {
-
+/*
 	VkResult result = VK_ERROR_UNKNOWN;
 
 	// Struct that contains Information about the application that we will use later
@@ -109,7 +135,7 @@ bool Window::initVulkan() {
 	createInfo.sType =VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 
 	// Point to any other struct types if needed
-	createInfo.pNext = nullptr;
+	/createInfo.pNext = nullptr;
 
 	// Set Application info
 	createInfo.pApplicationInfo = &appInfo;
@@ -161,8 +187,9 @@ bool Window::initVulkan() {
 		Logger::log(0, "%s: Error - Could not create Vulkan surface\n", __FUNCTION__);
 		return false;
 	}
-
+	*/
 	return true;
+
 }
 
 void Window::mainLoop() {
@@ -176,12 +203,15 @@ void Window::mainLoop() {
 	// Activate wait for vertical sync or else window will start to flicker 
 	glfwSwapInterval(1);
 
-	float color = 0.0f;
+	mRenderer->uploadData(mModel->getVertexData());
+
+	// float color = 0.0f;
 
 	Logger::log(1, "%s: Starting window loop...\n", __FUNCTION__);
 	// While the user has not generated the close window event.
 	while (!glfwWindowShouldClose(mWindow)) {
-		
+		/* Being done by renderer now 
+		* 
 		// Slowly increment value of color and reset when reaches to 1
 		color >= 1.0f ? color = 0.0f : color += 0.01f;
 		
@@ -191,6 +221,9 @@ void Window::mainLoop() {
 		// Back buffer will give the screen the color set in buffer. 
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		*/
+
+		mRenderer->draw();
 		// Swap the front buffer with the back buffer to show its contents (Now the front will now become the back buffer after swapping)
 		glfwSwapBuffers(mWindow);
 
@@ -212,10 +245,10 @@ void Window::cleanup() {
 	Logger::log(1, "%s: Terminating Window.\n",__FUNCTION__);
 
 	// Destroy Vulkan Surface
-	vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+	//vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
 
 	// Destroy Vulkan Instance
-	vkDestroyInstance(mInstance, nullptr);
+	//vkDestroyInstance(mInstance, nullptr);
 
 	// Destroy Window
 	glfwDestroyWindow(mWindow);

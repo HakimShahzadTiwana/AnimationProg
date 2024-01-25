@@ -1,5 +1,6 @@
 #include "OGLRenderer.h"
 #include "../Logger/Logger.h"
+
 bool OGLRenderer::init(unsigned int width, unsigned int height) {
 
 	// Init OpenGL via Glad 
@@ -21,7 +22,7 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	}
 
 	// Load Texture
-	if (mTex.loadTexture("textures/crate.png")) {
+	if (!mTex.loadTexture("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Textures\\crate.png")) {
 		Logger::log(0, "%s: Error - Could not load texture \"%s\".\n", __FUNCTION__,"textures/crate.png");
 		return false;
 	}
@@ -30,7 +31,7 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	mVertexBuffer.init();
 
 	// Load shaders
-	if (!mBasicShader.loadShaders("shader/basic.vert", "shader/basic.frag")) {
+	if (!mBasicShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\basic.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\basic.frag")) {
 		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__,"shader/basic.vert", "shader/basic.frag");
 		return false;
 	}
@@ -64,7 +65,7 @@ void OGLRenderer::draw() {
 	// Setup //
 
 	// Bind frame buffer object which will let it receive the vertex data
-	mFrameBuffer.bind();
+	mFrameBuffer.bindDrawing();
 
 	// Clear screen with a low grey color 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -93,7 +94,7 @@ void OGLRenderer::draw() {
 	// Unbind
 	mVertexBuffer.unbind();
 	mTex.unbind();
-	mFrameBuffer.unbind();
+	mFrameBuffer.unbindDrawing();
 
 	// Draw content of the frame buffer to the screen
 	mFrameBuffer.drawToScreen();
