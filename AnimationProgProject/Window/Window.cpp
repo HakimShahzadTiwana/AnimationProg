@@ -49,7 +49,11 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 	// Get OpenGL context and set it to current thread to have access to global state for rendering (Remove for vulkan since it need no context)
 	glfwMakeContextCurrent(mWindow);
 
-	mRenderer = std::make_unique<OGLRenderer>();
+	// OpenGL Renderer
+	//mRenderer = std::make_unique<OGLRenderer>();
+
+	// Vulkan Renderer
+	mRenderer = std::make_unique<VkRenderer>(mWindow);
 
 	if (!mRenderer->init(width, height)) {
 
@@ -223,7 +227,10 @@ void Window::mainLoop() {
 
 		*/
 
-		mRenderer->draw();
+
+		if (!mRenderer->draw()) {
+			Logger::log(0, "%s: Error - Failed to draw from Renderer", __FUNCTION__);
+		}
 		// Swap the front buffer with the back buffer to show its contents (Now the front will now become the back buffer after swapping)
 		glfwSwapBuffers(mWindow);
 
