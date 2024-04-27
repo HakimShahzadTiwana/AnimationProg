@@ -18,3 +18,4 @@ struct OGLMesh {
 	// Vector of Vertex data
 	std::vector<OGLVertex> vertices;
 };
+

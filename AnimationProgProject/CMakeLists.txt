@@ -24,8 +24,15 @@ endif()
 # Project name, automatically adds the .exe extension when completed
 project ("AnimationProgProject")
 
+file(GLOB IMGUI_SRC  "imgui/*.cpp")
+file(GLOB WINDOW_SRC "window/*.cpp" "window/*.h") 
+file(GLOB LOGGER_SRC "logger/*.cpp" "logger/*.h")
+file(GLOB OPENGL_SRC "opengl/*.cpp" "opengl/*.h")
+file(GLOB INCLUDE_SRC "include/*.cpp" "include/*.h")
+file(GLOB MODEL_SRC "models/*.cpp" "models/*.h")
+
 # Add source to this project's executable 
-add_executable (AnimationProgProject "AnimationProgProject.cpp" "AnimationProgProject.h" "window/Window.cpp" "window/Window.h" "logger/Logger.h" "logger/Logger.cpp" "src/glad.c" "include/glad/glad.h" "include/KHR/khrplatform.h" "opengl/mainRenderer/OGLRenderer.cpp" "opengl/mainRenderer/OGLRenderer.h" "opengl/mainRenderer/OGLRenderData.h" "opengl/buffers/frameBuffer/FrameBuffer.h" "opengl/buffers/frameBuffer/FrameBuffer.cpp" "opengl/buffers/vertexBuffer/VertexBuffer.h" "opengl/buffers/vertexBuffer/VertexBuffer.cpp" "opengl/textures/Texture.h" "opengl/textures/Texture.cpp" "opengl/shaders/Shader.h" "opengl/shaders/Shader.cpp" "models/Model.h" "models/Model.cpp" "opengl/buffers/uniformBuffer/UniformBuffer.h" "opengl/buffers/uniformBuffer/UniformBuffer.cpp")
+add_executable (AnimationProgProject "AnimationProgProject.cpp" "AnimationProgProject.h" "src/glad.c" ${WINDOW_SRC} ${LOGGER_SRC} ${INCLUDE_SRC} "opengl/mainRenderer/OGLRenderer.cpp" "opengl/mainRenderer/OGLRenderer.h" "opengl/mainRenderer/OGLRenderData.h" "opengl/buffers/frameBuffer/FrameBuffer.h" "opengl/buffers/frameBuffer/FrameBuffer.cpp" "opengl/buffers/vertexBuffer/VertexBuffer.h" "opengl/buffers/vertexBuffer/VertexBuffer.cpp" "opengl/buffers/uniformBuffer/UniformBuffer.cpp" "opengl/buffers/uniformBuffer/UniformBuffer.h" "opengl/textures/Texture.h" "opengl/textures/Texture.cpp" "opengl/shaders/Shader.h" "opengl/shaders/Shader.cpp"  ${MODEL_SRC} ${IMGUI_SRC})
 
 
 # Finds the glfw library and marks as required 
@@ -50,7 +57,7 @@ find_package(Vulkan REQUIRED)
 target_link_libraries(AnimationProgProject ${GLFW3_LIBRARY} Vulkan::Vulkan)
 
 # add for glad loader
-target_include_directories(AnimationProgProject PUBLIC include src window tools opengl model)
+target_include_directories(AnimationProgProject PUBLIC include src window tools opengl model imgui)
 
 
 ##Template code that i dont think i need
