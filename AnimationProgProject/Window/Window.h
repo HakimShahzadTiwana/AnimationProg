@@ -4,12 +4,9 @@
 // Note : Vulkan include has to be before GLFW so that GLFW can detect Vulkan
 
 #include <memory>
-// Used for openGL Rendering
-//#include "./mainRenderer/OGLRenderer.h"
-// Used for Vulkan Rendering
-#include "../vulkan/Renderer/VkRenderer.h"
+#include "./mainRenderer/OGLRenderer.h"
 #include "../models/Model.h"
-#include <vulkan/vulkan.h>
+//#include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
 
@@ -44,16 +41,8 @@ class Window {
 		// Handle for Vulkan Surface (The drawable "Surface")
 		//VkSurfaceKHR mSurface{};
 
-		// OpenGl Rendering
-		//std::unique_ptr<OGLRenderer> mRenderer;
-		// Vulkan Rendering
-		std::unique_ptr<VkRenderer> mRenderer;
-
-
+		std::unique_ptr<OGLRenderer> mRenderer;
 		std::unique_ptr<Model> mModel;
-
-		
-
 
 		// To handle window close 
 		void handleWindowCloseEvents();
