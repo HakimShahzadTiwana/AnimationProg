@@ -49,7 +49,7 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 	// Get OpenGL context and set it to current thread to have access to global state for rendering (Remove for vulkan since it need no context)
 	glfwMakeContextCurrent(mWindow);
 
-	mRenderer = std::make_unique<OGLRenderer>();
+	mRenderer = std::make_unique<OGLRenderer>(mWindow);
 
 	if (!mRenderer->init(width, height)) {
 
@@ -73,6 +73,11 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 	glfwSetKeyCallback(mWindow, [](GLFWwindow* win, int key, int scancode, int action, int mods) {
 		auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
 		thisWindow->handleKeyEvents(key, scancode, action, mods);
+
+		// Key events handled by the renderer 
+		auto renderer = static_cast<OGLRenderer*>(glfwGetWindowUserPointer(win));
+		renderer->handleKeyEvents(key, scancode, action, mods);
+
 	});
 
 	// Creating a callback function for mouse button events

@@ -1,6 +1,11 @@
 #include "OGLRenderer.h"
 #include "../Logger/Logger.h"
 
+OGLRenderer::OGLRenderer(GLFWwindow* window)
+{
+	mWindow = window;
+}
+
 bool OGLRenderer::init(unsigned int width, unsigned int height) {
 
 	// Init OpenGL via Glad 
@@ -33,6 +38,11 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	// Load shaders
 	if (!mBasicShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\basic.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\basic.frag")) {
 		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__,"shader/basic.vert", "shader/basic.frag");
+		return false;
+	}
+
+	if (!mChangedShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\changed.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\changed.frag")) {
+		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__, "shader/changed.vert", "shader/changed.frag");
 		return false;
 	}
 
@@ -80,7 +90,14 @@ void OGLRenderer::draw() {
 	// Draw triangles stored in the buffer //
 
 	// Load Shader program to enable processing or vertex data
-	mBasicShader.use();
+	if (mUseChangedShader) 
+	{
+		mChangedShader.use();
+	}
+	else 
+	{
+		mBasicShader.use();
+	}
 
 	// Bind texture to draw textured triangles
 	mTex.bind();
@@ -101,13 +118,22 @@ void OGLRenderer::draw() {
 
 }
 
+void OGLRenderer::handleKeyEvents(int key, int scancode, int action, int mods)
+{
+	if (glfwGetKey(mWindow, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		mUseChangedShader = !mUseChangedShader;
+		Logger::log(1, "%s: Space pressed... Toggling useChangeShader to %d\n", __FUNCTION__,mUseChangedShader);
+	}
+
+}
+
 
 void OGLRenderer::cleanup() {
 
 	Logger::log(1, "%s: Cleaning up renderer...\n", __FUNCTION__);
-	// Cleanup Shader
+	// Cleanup Shaders
 	mBasicShader.cleanup();
-
+	mChangedShader.cleanup();
 	// Cleanup Texture
 	mTex.cleanup();
 

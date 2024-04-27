@@ -1,0 +1,1 @@
+Change the absolute paths in the OGL renderer code to relative paths

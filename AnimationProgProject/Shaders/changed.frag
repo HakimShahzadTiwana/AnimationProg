@@ -6,6 +6,7 @@ out vec4 FragColor;
 uniform sampler2D Tex;
 
 void main() {
-// Multiply the color to the vertices
-  FragColor = texture(Tex, texCoord) * texColor;
+
+// Subtraction inverts the colors of the vertices
+  FragColor = texture(Tex, texCoord) * (vec4(1.0) - texColor);
 }

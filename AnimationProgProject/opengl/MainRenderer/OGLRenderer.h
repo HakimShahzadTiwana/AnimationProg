@@ -24,6 +24,8 @@ class OGLRenderer {
 
 	public:
 
+		OGLRenderer(GLFWwindow* window);
+
 		// Initialize and create the OpenGL objects we need for drawing
 		// @param width - Width of Renderer
 		// @param height - Height of Renderer
@@ -44,9 +46,14 @@ class OGLRenderer {
 		// Draws triangles to frame buffer
 		void draw();
 
+		// Hand;es keyboard events
+		void handleKeyEvents(int key, int scancode, int action, int mods);
+
 	private:
-		
+		GLFWwindow* mWindow = nullptr;
+
 		Shader mBasicShader{};
+		Shader mChangedShader{};
 		FrameBuffer mFrameBuffer{};
 		VertexBuffer mVertexBuffer{};
 		Texture mTex{};
@@ -54,4 +61,6 @@ class OGLRenderer {
 		// Counter of triangles we upload to the renderer
 		int mTriangleCount = 0;
 
+		// If render is using the changed shader file 
+		bool mUseChangedShader = false;
 };
