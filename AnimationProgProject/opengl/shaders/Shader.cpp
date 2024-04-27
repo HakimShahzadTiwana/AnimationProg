@@ -40,6 +40,13 @@ bool Shader::loadShaders(std::string vertexShaderFileName, std::string fragmentS
 		return false;
 	}
 
+	// Extracts location of block with passed in name from the compiled shader program
+	GLint uboIndex = glGetUniformBlockIndex(mShaderProgram, "Matrices");
+
+	// The location is then bound to passed index of the uniform buffer in the shader file (see basic.vert and changed.vert)
+	glUniformBlockBinding(mShaderProgram, uboIndex, 0);
+
+
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 	

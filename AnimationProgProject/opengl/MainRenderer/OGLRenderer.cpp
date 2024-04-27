@@ -4,9 +4,13 @@
 OGLRenderer::OGLRenderer(GLFWwindow* window)
 {
 	mWindow = window;
+	
 }
 
 bool OGLRenderer::init(unsigned int width, unsigned int height) {
+
+	mWidth = width;
+	mHeight = height;
 
 	// Init OpenGL via Glad 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
@@ -41,6 +45,9 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 		return false;
 	}
 
+	mUniformBuffer.init();
+	Logger::log(1, "%s: uniform buffer successfully created\n", __FUNCTION__);
+
 	if (!mChangedShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\changed.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\changed.frag")) {
 		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__, "shader/changed.vert", "shader/changed.frag");
 		return false;
@@ -53,6 +60,13 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 }
 
 void OGLRenderer::setSize(unsigned int width, unsigned int height) {
+	
+	if (width == 0 || height == 0) {
+		return;
+	}
+
+	mWidth = width;
+	mHeight = height;
 
 	// Resize buffer
 	mFrameBuffer.resize(width, height);
@@ -89,16 +103,36 @@ void OGLRenderer::draw() {
 
 	// Draw triangles stored in the buffer //
 
+	// Set projection view 
+	glm::vec3 cameraPosition = glm::vec3(0.4f, 0.3f, 1.0f);
+	glm::vec3 cameraLookAtPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 cameraUpVector = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	// Projection Matrix for view of world 
+	// PARAMS - FOV, Aspect Ratio, Near Z distance, Far Z Distance 
+	mProjectionMatrix = glm::perspective(glm::radians(90.0f),static_cast<float>(mWidth) / static_cast<float>(mHeight),0.1f, 100.f);
+
+	// Get time 
+	float time = glfwGetTime();
+
+	glm::mat4 view = glm::mat4(1.0);
+
 	// Load Shader program to enable processing or vertex data
 	if (mUseChangedShader) 
 	{
 		mChangedShader.use();
+		// Creates rotation matrix around the z axis by an amount of "time" radians
+		view = glm::rotate(glm::mat4(1.0f), time, glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 	else 
 	{
 		mBasicShader.use();
+		view = glm::rotate(glm::mat4(1.0f), -time, glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 
+	// Combine the the rotation camera position
+	mViewMatrix = glm::lookAt(cameraPosition, cameraLookAtPosition, cameraUpVector) * view;
+	mUniformBuffer.uploadUboData(mViewMatrix, mProjectionMatrix);
 	// Bind texture to draw textured triangles
 	mTex.bind();
 
@@ -139,7 +173,8 @@ void OGLRenderer::cleanup() {
 
 	// Cleanup VertexBuffer
 	mVertexBuffer.cleanup();
-
+	// Cleanup UnfiformBuffer
+	mUniformBuffer.cleanup();
 	// Cleanup FrameBuffer
 	mFrameBuffer.cleanup();
 

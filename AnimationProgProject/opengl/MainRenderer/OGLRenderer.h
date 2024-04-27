@@ -5,6 +5,11 @@
 
 // OpenGL Mathematics Lib
 #include <glm/glm.hpp>
+// Matrix roation
+#include <glm/gtc/matrix_transform.hpp>
+// Perpective view
+#include <glm/ext/matrix_clip_space.hpp>
+
 
 // Loader generator to make openGL functions human readable and available
 #include <glad/glad.h>
@@ -14,6 +19,7 @@
 
 #include "./buffers/frameBuffer/FrameBuffer.h"
 #include "./buffers/vertexBuffer/VertexBuffer.h"
+#include "./buffers/uniformBuffer/UniformBuffer.h"
 #include "./textures/Texture.h"
 #include "./shaders/Shader.h"
 
@@ -56,11 +62,20 @@ class OGLRenderer {
 		Shader mChangedShader{};
 		FrameBuffer mFrameBuffer{};
 		VertexBuffer mVertexBuffer{};
+		UniformBuffer mUniformBuffer{};
 		Texture mTex{};
+
+		glm::mat4 mViewMatrix = glm::mat4(1.0f);
+		glm::mat4 mProjectionMatrix = glm::mat4(1.0f);
+
 
 		// Counter of triangles we upload to the renderer
 		int mTriangleCount = 0;
 
 		// If render is using the changed shader file 
 		bool mUseChangedShader = false;
+
+		int mWidth;
+		int mHeight;
+		
 };

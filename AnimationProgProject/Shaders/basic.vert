@@ -6,8 +6,14 @@ layout (location = 2) in vec2 aTexCoord;
 layout (location = 0) out vec4 texColor;
 layout (location = 1) out vec2 texCoord;
 
+// std140 keyword used for mem layout inside shader and binding for index incase of multiple uniform buffers
+layout (std140, binding = 0) uniform Matrices {
+    mat4 view;
+    mat4 projection;
+};
+
 void main() {
-  gl_Position = vec4(aPos, 1.0);
+  gl_Position = projection * view * vec4(aPos, 1.0); 
   texColor = vec4(aColor,1.0);
   texCoord = aTexCoord;
 }

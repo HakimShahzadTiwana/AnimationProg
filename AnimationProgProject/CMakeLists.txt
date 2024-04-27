@@ -25,7 +25,7 @@ endif()
 project ("AnimationProgProject")
 
 # Add source to this project's executable 
-add_executable (AnimationProgProject "AnimationProgProject.cpp" "AnimationProgProject.h" "window/Window.cpp" "window/Window.h" "logger/Logger.h" "logger/Logger.cpp" "src/glad.c" "include/glad/glad.h" "include/KHR/khrplatform.h" "opengl/mainRenderer/OGLRenderer.cpp" "opengl/mainRenderer/OGLRenderer.h" "opengl/mainRenderer/OGLRenderData.h" "opengl/buffers/frameBuffer/FrameBuffer.h" "opengl/buffers/frameBuffer/FrameBuffer.cpp" "opengl/buffers/vertexBuffer/VertexBuffer.h" "opengl/buffers/vertexBuffer/VertexBuffer.cpp" "opengl/textures/Texture.h" "opengl/textures/Texture.cpp" "opengl/shaders/Shader.h" "opengl/shaders/Shader.cpp" "models/Model.h" "models/Model.cpp")
+add_executable (AnimationProgProject "AnimationProgProject.cpp" "AnimationProgProject.h" "window/Window.cpp" "window/Window.h" "logger/Logger.h" "logger/Logger.cpp" "src/glad.c" "include/glad/glad.h" "include/KHR/khrplatform.h" "opengl/mainRenderer/OGLRenderer.cpp" "opengl/mainRenderer/OGLRenderer.h" "opengl/mainRenderer/OGLRenderData.h" "opengl/buffers/frameBuffer/FrameBuffer.h" "opengl/buffers/frameBuffer/FrameBuffer.cpp" "opengl/buffers/vertexBuffer/VertexBuffer.h" "opengl/buffers/vertexBuffer/VertexBuffer.cpp" "opengl/textures/Texture.h" "opengl/textures/Texture.cpp" "opengl/shaders/Shader.h" "opengl/shaders/Shader.cpp" "models/Model.h" "models/Model.cpp" "opengl/buffers/uniformBuffer/UniformBuffer.h" "opengl/buffers/uniformBuffer/UniformBuffer.cpp")
 
 
 # Finds the glfw library and marks as required 
