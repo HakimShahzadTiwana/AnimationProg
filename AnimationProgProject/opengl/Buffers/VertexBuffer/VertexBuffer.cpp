@@ -17,11 +17,13 @@ void VertexBuffer::init() {
 
 	// Configures the buffer object - Pointers to the positions and uv properties in the OGLVertex struct
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(OGLVertex), (void*)offsetof(OGLVertex, position));
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,sizeof(OGLVertex), (void*)offsetof(OGLVertex, uv));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(OGLVertex), (void*)offsetof(OGLVertex, color));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,sizeof(OGLVertex), (void*)offsetof(OGLVertex, uv));
 
 	// Enables the buffer we just configured
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 
 	// Unbind array and buffer
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
