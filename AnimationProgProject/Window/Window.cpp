@@ -80,11 +80,11 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 
 	});
 
-	// Creating a callback function for mouse button events
-	glfwSetMouseButtonCallback(mWindow, [](GLFWwindow* win, int button, int action, int mods) {
-		auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
-		thisWindow->handleMouseButtonEvents(button, action, mods);
-	});
+	//// Creating a callback function for mouse button events
+	//glfwSetMouseButtonCallback(mWindow, [](GLFWwindow* win, int button, int action, int mods) {
+	//	auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
+	//	thisWindow->handleMouseButtonEvents(button, action, mods);
+	//});
 
 
 	// Set user pointer to renderer for resizing

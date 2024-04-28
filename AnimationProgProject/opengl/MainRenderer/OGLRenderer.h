@@ -22,6 +22,8 @@
 #include "./buffers/uniformBuffer/UniformBuffer.h"
 #include "./textures/Texture.h"
 #include "./shaders/Shader.h"
+#include "./../userInterface/UserInterface.h"
+#include "./../timer/Timer.h"
 
 #include "OGLRenderData.h"
 
@@ -56,26 +58,23 @@ class OGLRenderer {
 		void handleKeyEvents(int key, int scancode, int action, int mods);
 
 	private:
-		GLFWwindow* mWindow = nullptr;
-
+	
 		Shader mBasicShader{};
 		Shader mChangedShader{};
 		FrameBuffer mFrameBuffer{};
 		VertexBuffer mVertexBuffer{};
 		UniformBuffer mUniformBuffer{};
 		Texture mTex{};
-
+		OGLRenderData mRenderData{};
+		UserInterface mUserInterface{};
+		Timer mUIGenerateTimer{};
 		glm::mat4 mViewMatrix = glm::mat4(1.0f);
 		glm::mat4 mProjectionMatrix = glm::mat4(1.0f);
 
 
-		// Counter of triangles we upload to the renderer
-		int mTriangleCount = 0;
+		
+		
 
-		// If render is using the changed shader file 
-		bool mUseChangedShader = false;
-
-		int mWidth;
-		int mHeight;
+		
 		
 };

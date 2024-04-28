@@ -3,14 +3,14 @@
 
 OGLRenderer::OGLRenderer(GLFWwindow* window)
 {
-	mWindow = window;
+	mRenderData.rdWindow = window;
 	
 }
 
 bool OGLRenderer::init(unsigned int width, unsigned int height) {
 
-	mWidth = width;
-	mHeight = height;
+	mRenderData.rdWidth = width;
+	mRenderData.rdHeight = height;
 
 	// Init OpenGL via Glad 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
@@ -53,7 +53,7 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 		return false;
 	}
 
-	
+	mUserInterface.init(mRenderData);
 	// Init successful
 	Logger::log(1, "%s: Renderer Init Successful.\n", __FUNCTION__);
 	return true;
@@ -65,8 +65,8 @@ void OGLRenderer::setSize(unsigned int width, unsigned int height) {
 		return;
 	}
 
-	mWidth = width;
-	mHeight = height;
+	mRenderData.rdWidth = width;
+	mRenderData.rdHeight = height;
 
 	// Resize buffer
 	mFrameBuffer.resize(width, height);
@@ -78,7 +78,7 @@ void OGLRenderer::setSize(unsigned int width, unsigned int height) {
 
 void OGLRenderer::uploadData(OGLMesh vertexData) {
 	
-	mTriangleCount = vertexData.vertices.size();
+	mRenderData.rdTriangleCount = vertexData.vertices.size();
 	mVertexBuffer.uploadData(vertexData);
 	Logger::log(1, "%s: Vertex data uploaded successfully.\n", __FUNCTION__);
 }
@@ -86,6 +86,11 @@ void OGLRenderer::uploadData(OGLMesh vertexData) {
 void OGLRenderer::draw() {
 
 	Logger::log(1, "%s: Drawing...\n", __FUNCTION__);
+
+	// Get Start time 
+	static float prevFrameStartTime = 0.0;
+	float frameStartTime = glfwGetTime();
+
 	// Setup //
 
 	// Bind frame buffer object which will let it receive the vertex data
@@ -110,7 +115,7 @@ void OGLRenderer::draw() {
 
 	// Projection Matrix for view of world 
 	// PARAMS - FOV, Aspect Ratio, Near Z distance, Far Z Distance 
-	mProjectionMatrix = glm::perspective(glm::radians(90.0f),static_cast<float>(mWidth) / static_cast<float>(mHeight),0.1f, 100.f);
+	mProjectionMatrix = glm::perspective(glm::radians(static_cast<float>(mRenderData.rdFieldOfView)),static_cast<float>(mRenderData.rdWidth) / static_cast<float>(mRenderData.rdHeight),0.1f, 100.f);
 
 	// Get time 
 	float time = glfwGetTime();
@@ -118,7 +123,7 @@ void OGLRenderer::draw() {
 	glm::mat4 view = glm::mat4(1.0);
 
 	// Load Shader program to enable processing or vertex data
-	if (mUseChangedShader) 
+	if (mRenderData.rdUseChangedShader) 
 	{
 		mChangedShader.use();
 		// Creates rotation matrix around the z axis by an amount of "time" radians
@@ -140,7 +145,7 @@ void OGLRenderer::draw() {
 	mVertexBuffer.bind();
 
 	// Sends vertex data to gpu to be processed by the shaders
-	mVertexBuffer.draw(GL_TRIANGLES, 0, mTriangleCount);
+	mVertexBuffer.draw(GL_TRIANGLES, 0, mRenderData.rdTriangleCount);
 		
 	// Unbind
 	mVertexBuffer.unbind();
@@ -150,13 +155,24 @@ void OGLRenderer::draw() {
 	// Draw content of the frame buffer to the screen
 	mFrameBuffer.drawToScreen();
 
+	mUIGenerateTimer.start();
+	mUserInterface.createFrame(mRenderData);
+	mRenderData.rdUIGenerateTime = mUIGenerateTimer.stop();
+
+	mUserInterface.render();
+	
+	// Calculate time taken to complete function  
+	mRenderData.rdFrameTime = frameStartTime - prevFrameStartTime;
+	prevFrameStartTime = frameStartTime;
+	Logger::log(1, "%s: Time taken to execute draw function %f\n", __FUNCTION__, mRenderData.rdFrameTime);
+
 }
 
 void OGLRenderer::handleKeyEvents(int key, int scancode, int action, int mods)
 {
-	if (glfwGetKey(mWindow, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		mUseChangedShader = !mUseChangedShader;
-		Logger::log(1, "%s: Space pressed... Toggling useChangeShader to %d\n", __FUNCTION__,mUseChangedShader);
+	if (glfwGetKey(mRenderData.rdWindow, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		mRenderData.rdUseChangedShader = !mRenderData.rdUseChangedShader;
+		Logger::log(1, "%s: Space pressed... Toggling useChangeShader to %d\n", __FUNCTION__, mRenderData.rdUseChangedShader);
 	}
 
 }
@@ -177,6 +193,9 @@ void OGLRenderer::cleanup() {
 	mUniformBuffer.cleanup();
 	// Cleanup FrameBuffer
 	mFrameBuffer.cleanup();
+
+	//Cleanup UserInterface
+	mUserInterface.cleanup();
 
 	Logger::log(1, "%s: Renderer cleaned successfully.\n", __FUNCTION__);
 }
