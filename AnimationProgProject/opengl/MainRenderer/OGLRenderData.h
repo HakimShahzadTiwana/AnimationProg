@@ -41,12 +41,23 @@ struct OGLRenderData {
 	// Is the program currently using the second shader
 	bool rdUseChangedShader = false;
 
+
+	/* Camera Data*/
 	// FOV
 	int rdFieldOfView = 90;
-
-	// Camera Yaw
+	// Yaw
 	float rdViewAzimuth = 320.0f;
-
-	// Camera Pitch 
+	// Pitch 
 	float rdViewElevation = -15.0f;
+	// Movement
+	int rdMoveForward = 0;
+	int rdMoveRight = 0;
+	int rdMoveUp = 0;
+	
+	// Position
+	glm::vec3 rdCameraWorldPosition = glm::vec3(0);
+
+
+	// Difference between tewo rendered images
+	float rdTickDiff = 0.0f;
 };

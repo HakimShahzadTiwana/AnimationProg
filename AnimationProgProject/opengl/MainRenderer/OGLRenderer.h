@@ -58,10 +58,13 @@ class OGLRenderer {
 
 		// Handles keyboard events
 		void handleKeyEvents(int key, int scancode, int action, int mods);
+		void handleMovementKeys();
+
 
 		// Handles mouse events
 		void handleMouseButtonEvents(int button, int action, int mods);
 		void handleMousePositionEvents(double xPos, double yPos);
+
 
 
 	private:
@@ -85,6 +88,7 @@ class OGLRenderer {
 		int mMouseXPos = 0;
 		int mMouseYPos = 0;
 		
+		double lastTickTime = 0.0;
 
 		
 		

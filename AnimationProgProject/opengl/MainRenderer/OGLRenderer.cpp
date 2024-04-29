@@ -89,9 +89,16 @@ void OGLRenderer::draw() {
 
 	Logger::log(1, "%s: Drawing...\n", __FUNCTION__);
 
+	// Get Tick time 
+	double tickTime = glfwGetTime();
+	mRenderData.rdTickDiff = tickTime - lastTickTime;
+
 	// Get Start time 
 	static float prevFrameStartTime = 0.0;
 	float frameStartTime = glfwGetTime();
+
+	handleMovementKeys();
+	
 
 	// Setup //
 
@@ -111,7 +118,7 @@ void OGLRenderer::draw() {
 	// Draw triangles stored in the buffer //
 
 	 
-
+	
 
 	// Projection Matrix for view of world 
 	// PARAMS - FOV, Aspect Ratio, Near Z distance, Far Z Distance 
@@ -167,6 +174,10 @@ void OGLRenderer::draw() {
 	// Calculate time taken to complete function  
 	mRenderData.rdFrameTime = frameStartTime - prevFrameStartTime;
 	prevFrameStartTime = frameStartTime;
+
+	// Save last tick time
+	lastTickTime = tickTime;
+
 	Logger::log(1, "%s: Time taken to execute draw function %f\n", __FUNCTION__, mRenderData.rdFrameTime);
 
 }
@@ -179,6 +190,44 @@ void OGLRenderer::handleKeyEvents(int key, int scancode, int action, int mods)
 	}
 
 }
+
+void OGLRenderer::handleMovementKeys()
+{
+	// Forward Movement
+	mRenderData.rdMoveForward = 0;
+	if (glfwGetKey(mRenderData.rdWindow, GLFW_KEY_W) == GLFW_PRESS) 
+	{
+		mRenderData.rdMoveForward += 1;
+	}
+
+	if (glfwGetKey(mRenderData.rdWindow, GLFW_KEY_S) == GLFW_PRESS) 
+	{
+		mRenderData.rdMoveForward -= 1;
+	}
+
+	// Right movement
+	mRenderData.rdMoveRight = 0;
+	if (glfwGetKey(mRenderData.rdWindow, GLFW_KEY_A) == GLFW_PRESS) 
+	{
+		mRenderData.rdMoveRight -= 1;
+	}
+	if (glfwGetKey(mRenderData.rdWindow, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		mRenderData.rdMoveRight += 1;
+	}
+
+	// Upward movement
+	mRenderData.rdMoveUp = 0;
+	if (glfwGetKey(mRenderData.rdWindow, GLFW_KEY_E) == GLFW_PRESS)
+	{
+		mRenderData.rdMoveUp += 1;
+	}
+	if (glfwGetKey(mRenderData.rdWindow, GLFW_KEY_Q) == GLFW_PRESS)
+	{
+		mRenderData.rdMoveUp -= 1;
+	}
+}
+
 
 void OGLRenderer::handleMouseButtonEvents(int button, int action, int mods)
 {

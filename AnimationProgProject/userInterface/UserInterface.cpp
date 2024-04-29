@@ -1,6 +1,7 @@
 #include <string>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <glm/gtx/string_cast.hpp>
 #include "UserInterface.h"
 
 void UserInterface::init(OGLRenderData& renderData)
@@ -55,8 +56,7 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 	/* Text Widget for UI Generation Time (CreateFrame) */
 	ImGui::Text("UI Generation Time:");
 	ImGui::SameLine();
-	ImGui::Text(std::to_string
-	(renderData.rdUIGenerateTime).c_str());
+	ImGui::Text(std::to_string(renderData.rdUIGenerateTime).c_str());
 	ImGui::SameLine();
 	ImGui::Text("ms");
 	ImGui::Separator();
@@ -69,9 +69,12 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 	(renderData.rdViewAzimuth).c_str());
 	ImGui::Text("View Elevation:");
 	ImGui::SameLine();
-	ImGui::Text("%s", std::to_string
-	(renderData.rdViewElevation).c_str());
+	ImGui::Text("%s", std::to_string(renderData.rdViewElevation).c_str());
+	ImGui::Text("Camera Position:");
+	ImGui::SameLine();
+	ImGui::Text("%s", glm::to_string(renderData.rdCameraWorldPosition).c_str());
 	ImGui::Separator();
+
 
 
 	/* Create text for triangle count */
