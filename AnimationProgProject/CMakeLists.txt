@@ -35,7 +35,7 @@ file(GLOB UI_SRC "userInterface/*.cpp" "userInterface/*.h")
 
 
 # Add source to this project's executable 
-add_executable (AnimationProgProject "AnimationProgProject.cpp" "AnimationProgProject.h" "src/glad.c" ${WINDOW_SRC} ${LOGGER_SRC} ${INCLUDE_SRC} ${MODEL_SRC} ${IMGUI_SRC} ${UI_SRC} "opengl/mainRenderer/OGLRenderer.cpp" "opengl/mainRenderer/OGLRenderer.h" "opengl/mainRenderer/OGLRenderData.h" "opengl/buffers/frameBuffer/FrameBuffer.h" "opengl/buffers/frameBuffer/FrameBuffer.cpp" "opengl/buffers/vertexBuffer/VertexBuffer.h" "opengl/buffers/vertexBuffer/VertexBuffer.cpp" "opengl/buffers/uniformBuffer/UniformBuffer.cpp" "opengl/buffers/uniformBuffer/UniformBuffer.h" "opengl/textures/Texture.h" "opengl/textures/Texture.cpp" "opengl/shaders/Shader.h" "opengl/shaders/Shader.cpp" "timer/Timer.h" "timer/Timer.cpp")
+add_executable (AnimationProgProject "AnimationProgProject.cpp" "AnimationProgProject.h" "src/glad.c" ${WINDOW_SRC} ${LOGGER_SRC} ${INCLUDE_SRC} ${MODEL_SRC} ${IMGUI_SRC} ${UI_SRC} "opengl/mainRenderer/OGLRenderer.cpp" "opengl/mainRenderer/OGLRenderer.h" "opengl/mainRenderer/OGLRenderData.h" "opengl/buffers/frameBuffer/FrameBuffer.h" "opengl/buffers/frameBuffer/FrameBuffer.cpp" "opengl/buffers/vertexBuffer/VertexBuffer.h" "opengl/buffers/vertexBuffer/VertexBuffer.cpp" "opengl/buffers/uniformBuffer/UniformBuffer.cpp" "opengl/buffers/uniformBuffer/UniformBuffer.h" "opengl/textures/Texture.h" "opengl/textures/Texture.cpp" "opengl/shaders/Shader.h" "opengl/shaders/Shader.cpp" "timer/Timer.h" "timer/Timer.cpp" "camera/Camera.h" "camera/Camera.cpp")
 
 
 # Finds the glfw library and marks as required 

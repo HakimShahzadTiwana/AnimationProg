@@ -24,6 +24,8 @@
 #include "./shaders/Shader.h"
 #include "./../userInterface/UserInterface.h"
 #include "./../timer/Timer.h"
+#include "./../camera/Camera.h"
+
 
 #include "OGLRenderData.h"
 
@@ -54,8 +56,13 @@ class OGLRenderer {
 		// Draws triangles to frame buffer
 		void draw();
 
-		// Hand;es keyboard events
+		// Handles keyboard events
 		void handleKeyEvents(int key, int scancode, int action, int mods);
+
+		// Handles mouse events
+		void handleMouseButtonEvents(int button, int action, int mods);
+		void handleMousePositionEvents(double xPos, double yPos);
+
 
 	private:
 	
@@ -68,11 +75,15 @@ class OGLRenderer {
 		OGLRenderData mRenderData{};
 		UserInterface mUserInterface{};
 		Timer mUIGenerateTimer{};
+		Camera mCamera{};
+
 		glm::mat4 mViewMatrix = glm::mat4(1.0f);
 		glm::mat4 mProjectionMatrix = glm::mat4(1.0f);
 
 
-		
+		bool mMouseLock = false;
+		int mMouseXPos = 0;
+		int mMouseYPos = 0;
 		
 
 		

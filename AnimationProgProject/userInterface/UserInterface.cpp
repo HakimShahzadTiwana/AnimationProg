@@ -61,6 +61,19 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 	ImGui::Text("ms");
 	ImGui::Separator();
 
+
+	/* Create text widget for camera data */
+	ImGui::Text("View Azimuth:");
+	ImGui::SameLine();
+	ImGui::Text("%s", std::to_string
+	(renderData.rdViewAzimuth).c_str());
+	ImGui::Text("View Elevation:");
+	ImGui::SameLine();
+	ImGui::Text("%s", std::to_string
+	(renderData.rdViewElevation).c_str());
+	ImGui::Separator();
+
+
 	/* Create text for triangle count */
 
 	// Print text in new line 

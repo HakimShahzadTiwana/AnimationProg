@@ -1,5 +1,7 @@
 #include "OGLRenderer.h"
 #include "../Logger/Logger.h"
+#include <imgui_impl_glfw.h>
+
 
 OGLRenderer::OGLRenderer(GLFWwindow* window)
 {
@@ -108,10 +110,8 @@ void OGLRenderer::draw() {
 
 	// Draw triangles stored in the buffer //
 
-	// Set projection view 
-	glm::vec3 cameraPosition = glm::vec3(0.4f, 0.3f, 1.0f);
-	glm::vec3 cameraLookAtPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 cameraUpVector = glm::vec3(0.0f, 1.0f, 0.0f);
+	 
+
 
 	// Projection Matrix for view of world 
 	// PARAMS - FOV, Aspect Ratio, Near Z distance, Far Z Distance 
@@ -135,9 +135,12 @@ void OGLRenderer::draw() {
 		view = glm::rotate(glm::mat4(1.0f), -time, glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 
-	// Combine the the rotation camera position
-	mViewMatrix = glm::lookAt(cameraPosition, cameraLookAtPosition, cameraUpVector) * view;
+	// Combine the the rotation camera position with the view matrix
+	mViewMatrix = mCamera.getViewMatrix(mRenderData) * view;
+
 	mUniformBuffer.uploadUboData(mViewMatrix, mProjectionMatrix);
+
+
 	// Bind texture to draw textured triangles
 	mTex.bind();
 
@@ -175,6 +178,100 @@ void OGLRenderer::handleKeyEvents(int key, int scancode, int action, int mods)
 		Logger::log(1, "%s: Space pressed... Toggling useChangeShader to %d\n", __FUNCTION__, mRenderData.rdUseChangedShader);
 	}
 
+}
+
+void OGLRenderer::handleMouseButtonEvents(int button, int action, int mods)
+{
+	// Get userinterface input/output object
+	ImGuiIO& io = ImGui::GetIO();
+
+	if (button >= 0 && button < ImGuiMouseButton_COUNT) {
+		io.AddMouseButtonEvent(button, action == GLFW_PRESS);
+	}
+	
+	// Return if the mouse is needed for UI
+	if (io.WantCaptureMouse) {
+		return;
+	}
+
+	// Check is right mouse button is pressed
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) 
+	{
+		mMouseLock = !mMouseLock;
+	}
+
+	if (mMouseLock) 
+	{
+		// Hide cursor if we are in locked mode
+		glfwSetInputMode(mRenderData.rdWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+		// Set mouse mode to raw motion, disabling the cursor is needed to for this
+		if (glfwRawMouseMotionSupported()) 
+		{
+			// Raw mode omits any extra mouse feature such as acceleration
+			glfwSetInputMode(mRenderData.rdWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+		}
+	}
+	else 
+	{
+		glfwSetInputMode(mRenderData.rdWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+
+}
+
+void OGLRenderer::handleMousePositionEvents(double xPos, double yPos)
+{
+	// Get userinterface input/output object
+	ImGuiIO& io = ImGui::GetIO();
+
+	io.AddMousePosEvent((float)xPos, (float)yPos);
+
+	// Return if the mouse is needed for UI
+	if (io.WantCaptureMouse){
+		return;
+	}
+
+	// Calculate difference from saved mouse pos and current mouse pos
+	int mouseMoveRelX = static_cast<int>(xPos) - mMouseXPos;
+	int mouseMoveRelY = static_cast<int>(yPos) - mMouseYPos;
+
+	if (mMouseLock) 
+	{
+		// X pos for Azimuth (yaw)
+
+		// Scale down by 10 to have more control ( mouse sensistivity)
+		mRenderData.rdViewAzimuth += mouseMoveRelX / 10.0f;
+
+		// Make sure ranges are between 0 and 360 
+		if (mRenderData.rdViewAzimuth < 0.0) 
+		{
+			mRenderData.rdViewAzimuth += 360.0;
+		}
+		if (mRenderData.rdViewAzimuth >= 360.0) 
+		{
+			mRenderData.rdViewAzimuth -= 360.0;
+		}
+
+		// y Pos for elevation (pitch) 
+
+		mRenderData.rdViewElevation -= mouseMoveRelY / 10.0;
+
+
+		// Range between -89 and 89 to make sure that azimuth values arent turned around 
+
+		if (mRenderData.rdViewElevation > 89.0)
+		{
+			mRenderData.rdViewElevation = 89.0;
+		}
+		if (mRenderData.rdViewElevation < -89.0)
+		{
+			mRenderData.rdViewElevation = -89.0;
+		}
+
+		// Save current mouse pos
+		mMouseXPos = static_cast<int>(xPos);
+		mMouseYPos = static_cast<int>(yPos);
+	}
 }
 
 

@@ -71,8 +71,8 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 
 	// Creating a callback function for keyboard events
 	glfwSetKeyCallback(mWindow, [](GLFWwindow* win, int key, int scancode, int action, int mods) {
-		auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
-		thisWindow->handleKeyEvents(key, scancode, action, mods);
+		/*auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
+		thisWindow->handleKeyEvents(key, scancode, action, mods);*/
 
 		// Key events handled by the renderer 
 		auto renderer = static_cast<OGLRenderer*>(glfwGetWindowUserPointer(win));
@@ -80,11 +80,22 @@ bool Window::init(unsigned int width, unsigned int height, std::string title) {
 
 	});
 
-	//// Creating a callback function for mouse button events
-	//glfwSetMouseButtonCallback(mWindow, [](GLFWwindow* win, int button, int action, int mods) {
-	//	auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
-	//	thisWindow->handleMouseButtonEvents(button, action, mods);
-	//});
+	// Creating a callback function for mouse button events
+	glfwSetMouseButtonCallback(mWindow, [](GLFWwindow* win, int button, int action, int mods) {
+		/*auto thisWindow = static_cast<Window*>(glfwGetWindowUserPointer(win));
+		thisWindow->handleMouseButtonEvents(button, action, mods);*/
+
+		auto render = static_cast<OGLRenderer*>(glfwGetWindowUserPointer(win));
+		render->handleMouseButtonEvents(button, action, mods);
+
+	});
+
+	glfwSetCursorPosCallback(mWindow, [](GLFWwindow* win, double xPos, double yPos) {
+		
+		auto render = static_cast<OGLRenderer*>(glfwGetWindowUserPointer(win));
+		render->handleMousePositionEvents(xPos, yPos);
+	
+	});
 
 
 	// Set user pointer to renderer for resizing
