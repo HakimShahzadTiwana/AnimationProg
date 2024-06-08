@@ -15,9 +15,6 @@ class Window {
 		// Initializes window with specified width,height and title
 		bool init(unsigned int width, unsigned int height, std::string title);
 
-		// Initialize Vulkan 
-		bool initVulkan();
-
 		// Opens the window and keeps the application running until closed down manually
 		void mainLoop();
 

@@ -54,7 +54,10 @@ void VertexBuffer::uploadData(OGLMesh vertexData) {
 	// Uploads the vertex data to openGL buffer 
 	glBufferData(GL_ARRAY_BUFFER, vertexData.vertices.size() * sizeof(OGLVertex), &vertexData.vertices.at(0), GL_DYNAMIC_DRAW);
 
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 	glBindVertexArray(0);
+
 }
 
 void VertexBuffer::bind() {

@@ -118,7 +118,7 @@ GLuint Shader::readShader(std::string shaderFileName, GLuint shaderType) {
 		return 0;
 	}
 
-	Logger::log(1, " %s : Read Shader %s successfully.\n", __FUNCTION__, shaderFileName);
+	Logger::log(1, " %s : Read Shader %s successfully.\n", __FUNCTION__, shaderFileName.c_str());
 
 	return shader;
 }

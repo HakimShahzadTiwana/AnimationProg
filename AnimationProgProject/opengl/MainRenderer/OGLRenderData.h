@@ -60,4 +60,21 @@ struct OGLRenderData {
 
 	// Difference between tewo rendered images
 	float rdTickDiff = 0.0f;
+
+	/* Spline and Slerp */
+	bool rdDrawWorldCoordArrows = true;
+	bool rdDrawModelCoordArrows = true;
+	bool rdDrawSplineLines = true;
+	bool rdResetAnglesAndInterp = true;
+
+	std::vector<int> rdRotXAngle = { 0, 0 };
+	std::vector<int> rdRotYAngle = { 0, 0 };
+	std::vector<int> rdRotZAngle = { 0, 0 };
+
+	glm::vec3 rdSplineStartVertex = glm::vec3(0.0f);
+	glm::vec3 rdSplineStartTangent = glm::vec3(0.0f);
+	glm::vec3 rdSplineEndVertex = glm::vec3(0.0f);
+	glm::vec3 rdSplineEndTangent = glm::vec3(0.0f);
+
+	float rdInterpValue = 0.0f;
 };

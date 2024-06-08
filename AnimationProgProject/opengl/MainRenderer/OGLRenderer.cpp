@@ -1,4 +1,6 @@
 #include "OGLRenderer.h"
+#include <algorithm>
+#include <glm/gtx/spline.hpp>
 #include "../Logger/Logger.h"
 #include <imgui_impl_glfw.h>
 
@@ -55,7 +57,27 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 		return false;
 	}
 
+
+	if (!mLineShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\line.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\line.frag")) {
+		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__, "shader/line.vert", "shader/line.frag");
+		return false;
+	}
+
 	mUserInterface.init(mRenderData);
+
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+	glLineWidth(3.0);
+
+	mModel = std::make_unique<Model>();
+
+	mModelMesh = std::make_unique<OGLMesh>();
+	Logger::log(1, "%s: model mesh storage initialized\n", __FUNCTION__);
+
+	mAllMeshes = std::make_unique<OGLMesh>();
+	Logger::log(1, "%s: global mesh storage initialized\n", __FUNCTION__);
+
+
 	// Init successful
 	Logger::log(1, "%s: Renderer Init Successful.\n", __FUNCTION__);
 	return true;
@@ -80,7 +102,7 @@ void OGLRenderer::setSize(unsigned int width, unsigned int height) {
 
 void OGLRenderer::uploadData(OGLMesh vertexData) {
 	
-	mRenderData.rdTriangleCount = vertexData.vertices.size();
+	//mRenderData.rdTriangleCount = vertexData.vertices.size();
 	mVertexBuffer.uploadData(vertexData);
 	Logger::log(1, "%s: Vertex data uploaded successfully.\n", __FUNCTION__);
 }
@@ -89,64 +111,208 @@ void OGLRenderer::draw() {
 
 	Logger::log(1, "%s: Drawing...\n", __FUNCTION__);
 
-	// Get Tick time 
+
+
+	// Get Tick time
 	double tickTime = glfwGetTime();
 	mRenderData.rdTickDiff = tickTime - lastTickTime;
 
-	// Get Start time 
+	// Get Start time
 	static float prevFrameStartTime = 0.0;
 	float frameStartTime = glfwGetTime();
 
 	handleMovementKeys();
-	
+
+	mAllMeshes->vertices.clear();
 
 	// Setup //
 
 	// Bind frame buffer object which will let it receive the vertex data
 	mFrameBuffer.bindDrawing();
 
-	// Clear screen with a low grey color 
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-
+	// Clear screen with a low grey color
+	glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+	glClearDepth(1.0f);
 	// Display the set screen color and clear the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Enables back face culling which means to draw only the front side of the triangle since we don't really see the back side
 	// Hence the back side of the objects will never be seen and the triangles facing "away" don't need to be drawn
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 
 	// Draw triangles stored in the buffer //
 
-	 
-	
-
-	// Projection Matrix for view of world 
-	// PARAMS - FOV, Aspect Ratio, Near Z distance, Far Z Distance 
+	// Projection Matrix for view of world
+	// PARAMS - FOV, Aspect Ratio, Near Z distance, Far Z Distance
 	mProjectionMatrix = glm::perspective(glm::radians(static_cast<float>(mRenderData.rdFieldOfView)),static_cast<float>(mRenderData.rdWidth) / static_cast<float>(mRenderData.rdHeight),0.1f, 100.f);
 
-	// Get time 
+	// Get time
 	float time = glfwGetTime();
 
 	glm::mat4 view = glm::mat4(1.0);
 
 	// Load Shader program to enable processing or vertex data
-	if (mRenderData.rdUseChangedShader) 
+	if (mRenderData.rdUseChangedShader)
 	{
-		mChangedShader.use();
+		//mChangedShader.use();
 		// Creates rotation matrix around the z axis by an amount of "time" radians
-		view = glm::rotate(glm::mat4(1.0f), time, glm::vec3(0.0f, 0.0f, 1.0f));
+		//view = glm::rotate(glm::mat4(1.0f), time, glm::vec3(0.0f, 0.0f, 1.0f));
 	}
-	else 
+	else
 	{
-		mBasicShader.use();
-		view = glm::rotate(glm::mat4(1.0f), -time, glm::vec3(0.0f, 0.0f, 1.0f));
+		//mBasicShader.use();
+		//view = glm::rotate(glm::mat4(1.0f), -time, glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 
 	// Combine the the rotation camera position with the view matrix
-	mViewMatrix = mCamera.getViewMatrix(mRenderData) * view;
+	mViewMatrix = mCamera.getViewMatrix(mRenderData);// *view;
 
 	mUniformBuffer.uploadUboData(mViewMatrix, mProjectionMatrix);
 
+	// Reset Angle and interp Values to Zero when UI button pressed
+	if (mRenderData.rdResetAnglesAndInterp)
+	{
+		mRenderData.rdResetAnglesAndInterp = false;
+
+		mRenderData.rdRotXAngle = { 0,0 };
+		mRenderData.rdRotYAngle = { 0,0 };
+		mRenderData.rdRotZAngle = { 0,0 };
+
+		mRenderData.rdInterpValue = 0;
+
+		mRenderData.rdSplineStartVertex = glm::vec3(-4, 1, -2);
+		mRenderData.rdSplineStartTangent = glm::vec3(-10, -8, 8);
+		mRenderData.rdSplineEndVertex = glm::vec3(4, 2, -2);
+		mRenderData.rdSplineEndTangent = glm::vec3(-6, 5, -6);
+
+
+		mRenderData.rdDrawModelCoordArrows = true;
+		mRenderData.rdDrawWorldCoordArrows = true;
+		mRenderData.rdDrawSplineLines = true;
+	}
+
+	// Create quarternion from angles
+
+	for (int i = 0; i < 2; i++)
+	{
+		// Using the angles to create a rotation vector in radians which is converted to a normalized quarternion for orientation of the model
+
+		mQuatModelOrientation[i] = glm::normalize(glm::quat(glm::vec3(
+			glm::radians(static_cast<float>(mRenderData.rdRotXAngle[i])),
+			glm::radians(static_cast<float>(mRenderData.rdRotYAngle[i])),
+			glm::radians(static_cast<float>(mRenderData.rdRotZAngle[i]))
+		)));
+
+		mQuatModelOrientationConjugate[i] = glm::conjugate(mQuatModelOrientation[i]);
+	}
+
+	// Interpolate between the two quarternions
+	mQuatMix = glm::slerp(mQuatModelOrientation[0], mQuatModelOrientation[1], mRenderData.rdInterpValue);
+	mQuatMixConjugate = glm::conjugate(mQuatMix);
+
+	// position the cube on th current spline position
+	glm::vec3 interpolatedPosition = glm::hermite(mRenderData.rdSplineStartVertex,mRenderData.rdSplineStartTangent,mRenderData.rdSplineEndVertex,mRenderData.rdSplineEndTangent,mRenderData.rdInterpValue);
+
+	// draw static coordinate system
+	mCoordArrowsMesh.vertices.clear();
+	if (mRenderData.rdDrawWorldCoordArrows)
+	{
+		mCoordArrowsMesh = mCoordArrowsModel.getVertexData();
+		std::for_each(mCoordArrowsMesh.vertices.begin(), mCoordArrowsMesh.vertices.end(), [=](auto& n)
+		{
+			n.color /= 2.0f;
+		});
+		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mCoordArrowsMesh.vertices.begin(), mCoordArrowsMesh.vertices.end());
+	}
+
+	mStartPosArrowMesh.vertices.clear();
+	mEndPosArrowMesh.vertices.clear();
+	mQuatPosArrowMesh.vertices.clear();
+
+	if (mRenderData.rdDrawModelCoordArrows)
+	{
+		// Arrow Start Position
+		mStartPosArrowMesh = mArrowModel.getVertexData();
+		std::for_each(mStartPosArrowMesh.vertices.begin(), mStartPosArrowMesh.vertices.end(), [=](auto& n)
+		{
+				glm::quat position = glm::quat(0.0f, n.position.x, n.position.y, n.position.z);
+				glm::quat newPosition = mQuatModelOrientation[0] * position * mQuatModelOrientationConjugate[0];
+				n.position.x = newPosition.x;
+				n.position.y = newPosition.y;
+				n.position.z = newPosition.z;
+				n.position += n.position + mRenderData.rdSplineStartVertex;
+				n.color = glm::vec3(0.0f, 0.8f, 0.8f);
+		});
+		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mStartPosArrowMesh.vertices.begin(), mStartPosArrowMesh.vertices.end());
+
+		// Arrow End Position
+		mEndPosArrowMesh = mArrowModel.getVertexData();
+		std::for_each(mEndPosArrowMesh.vertices.begin(), mEndPosArrowMesh.vertices.end(), [=](auto& n)
+		{
+			glm::quat position = glm::quat(0.0f, n.position.x, n.position.y, n.position.z);
+			glm::quat newPosition = mQuatModelOrientation[0] * position * mQuatModelOrientationConjugate[0];
+			n.position.x = newPosition.x;
+			n.position.y = newPosition.y;
+			n.position.z = newPosition.z;
+			n.position += n.position + mRenderData.rdSplineEndVertex;
+			n.color = glm::vec3(0.0f, 0.8f, 0.8f);
+		});
+		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(), mEndPosArrowMesh.vertices.begin(), mEndPosArrowMesh.vertices.end());
+
+		// Arrow to show quarternion orientation changes
+		mQuatPosArrowMesh = mArrowModel.getVertexData();
+		std::for_each(mQuatPosArrowMesh.vertices.begin(), mQuatPosArrowMesh.vertices.end(),[=](auto& n)
+		{
+			glm::quat position = glm::quat(0.0f, n.position.x, n.position.y, n.position.z);
+			glm::quat newPosition = mQuatMix * position * mQuatMixConjugate;
+			n.position.x = newPosition.x;
+			n.position.y = newPosition.y;
+			n.position.z = newPosition.z;
+			n.position += n.position + interpolatedPosition;
+
+		});
+		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mQuatPosArrowMesh.vertices.begin(), mQuatPosArrowMesh.vertices.end());
+	}
+
+	// Draw Spline
+	mSplineMesh.vertices.clear();
+	if (mRenderData.rdDrawSplineLines)
+	{
+		mSplineMesh = mSplineModel.createVertexData(25,mRenderData.rdSplineStartVertex, mRenderData.rdSplineStartTangent, mRenderData.rdSplineEndVertex, mRenderData.rdSplineEndTangent);
+		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mSplineMesh.vertices.begin(), mSplineMesh.vertices.end());
+	}
+
+	// draw model
+	*mModelMesh = mModel->getVertexData();
+	mRenderData.rdTriangleCount = mModelMesh->vertices.size();
+	std::for_each(mModelMesh->vertices.begin(), mModelMesh->vertices.end(), [=](auto& n)
+	{
+		glm::quat position = glm::quat(0.0f, n.position.x, n.position.y, n.position.z);
+		glm::quat newPosition = mQuatMix * position * mQuatMixConjugate;
+		n.position.x = newPosition.x;
+		n.position.y = newPosition.y;
+		n.position.z = newPosition.z;
+		n.position += n.position + interpolatedPosition;
+
+	});
+	mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mModelMesh->vertices.begin(), mModelMesh->vertices.end());
+
+	uploadData(*mAllMeshes);
+
+	mLineIndexCount = mStartPosArrowMesh.vertices.size() + mEndPosArrowMesh.vertices.size() + mQuatPosArrowMesh.vertices.size() + mCoordArrowsMesh.vertices.size() + mSplineMesh.vertices.size();
+
+	// Draw lines first
+	if (mLineIndexCount > 0)
+	{
+		mLineShader.use();
+
+		mVertexBuffer.bind();
+		mVertexBuffer.draw(GL_LINES,0,mLineIndexCount);
+		mVertexBuffer.unbind();
+	}
+
+	// Draw model last
+	mBasicShader.use();
 
 	// Bind texture to draw textured triangles
 	mTex.bind();
@@ -155,8 +321,8 @@ void OGLRenderer::draw() {
 	mVertexBuffer.bind();
 
 	// Sends vertex data to gpu to be processed by the shaders
-	mVertexBuffer.draw(GL_TRIANGLES, 0, mRenderData.rdTriangleCount);
-		
+	mVertexBuffer.draw(GL_TRIANGLES, mLineIndexCount, mRenderData.rdTriangleCount);
+
 	// Unbind
 	mVertexBuffer.unbind();
 	mTex.unbind();
@@ -170,8 +336,8 @@ void OGLRenderer::draw() {
 	mRenderData.rdUIGenerateTime = mUIGenerateTimer.stop();
 
 	mUserInterface.render();
-	
-	// Calculate time taken to complete function  
+
+	// Calculate time taken to complete function
 	mRenderData.rdFrameTime = frameStartTime - prevFrameStartTime;
 	prevFrameStartTime = frameStartTime;
 
@@ -179,14 +345,14 @@ void OGLRenderer::draw() {
 	lastTickTime = tickTime;
 
 	Logger::log(1, "%s: Time taken to execute draw function %f\n", __FUNCTION__, mRenderData.rdFrameTime);
-
+	
 }
 
 void OGLRenderer::handleKeyEvents(int key, int scancode, int action, int mods)
 {
 	if (glfwGetKey(mRenderData.rdWindow, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		mRenderData.rdUseChangedShader = !mRenderData.rdUseChangedShader;
-		Logger::log(1, "%s: Space pressed... Toggling useChangeShader to %d\n", __FUNCTION__, mRenderData.rdUseChangedShader);
+		//mRenderData.rdUseChangedShader = !mRenderData.rdUseChangedShader;
+		//Logger::log(1, "%s: Space pressed... Toggling useChangeShader to %d\n", __FUNCTION__, mRenderData.rdUseChangedShader);
 	}
 
 }
@@ -330,6 +496,8 @@ void OGLRenderer::cleanup() {
 	// Cleanup Shaders
 	mBasicShader.cleanup();
 	mChangedShader.cleanup();
+	mLineShader.cleanup();
+
 	// Cleanup Texture
 	mTex.cleanup();
 

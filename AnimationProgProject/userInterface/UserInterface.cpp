@@ -2,6 +2,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <glm/gtx/string_cast.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "UserInterface.h"
 
 void UserInterface::init(OGLRenderData& renderData)
@@ -34,6 +35,7 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 
 	// Set transparency of the window
 	ImGui::SetNextWindowBgAlpha(0.8f);
+
 
 	// Starts a new window 
 	// Params - Title of window, pointer to bool that is set to true when window is closed, windowflags
@@ -75,6 +77,76 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 	ImGui::Text("%s", glm::to_string(renderData.rdCameraWorldPosition).c_str());
 	ImGui::Separator();
 
+	/* Slerp + Spline Section */
+
+	if (ImGui::CollapsingHeader("Slerp + Spline"))
+	{
+		ImGui::Indent();
+
+
+		if (ImGui::Button("Reset All"))
+		{
+			renderData.rdResetAnglesAndInterp = true;
+		}
+
+		ImGui::Text("Interpolate");
+		ImGui::SameLine();
+		ImGui::SliderFloat("##Interp", &renderData.rdInterpValue, 0.0f, 1.0f);
+
+		if (ImGui::CollapsingHeader("Slerp"))
+		{
+			ImGui::Checkbox("Draw World Coordinate Arrows", &renderData.rdDrawWorldCoordArrows);
+			ImGui::Checkbox("Draw Model Coordinate Arrows", &renderData.rdDrawModelCoordArrows);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
+			ImGui::Text("X Rotation ");
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			ImGui::SliderInt2("##ROTX", renderData.rdRotXAngle.data(), 0, 360);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+			ImGui::Text("Y Rotation ");
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			ImGui::SliderInt2("##ROTY", renderData.rdRotYAngle.data(), 0, 360);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 255, 255));
+			ImGui::Text("Z Rotation ");
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			ImGui::SliderInt2("##ROTZ", renderData.rdRotZAngle.data(), 0, 360);
+		}
+
+		if (ImGui::CollapsingHeader("Spline"))
+		{
+			ImGui::Checkbox("Draw spline lines", &renderData.rdDrawSplineLines);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+			ImGui::Text("Start Vec ");
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			ImGui::SliderFloat3("##STARTVEC", glm::value_ptr(renderData.rdSplineStartVertex), -10.0f, 10.0f);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+			ImGui::Text("Start Tang ");
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			ImGui::SliderFloat3("##STARTTANG", glm::value_ptr(renderData.rdSplineStartTangent), -10.0f, 10.0f);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(100, 100, 100, 255));
+			ImGui::Text("End Vec ");
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			ImGui::SliderFloat3("##ENDVEC", glm::value_ptr(renderData.rdSplineEndVertex), -10.0f, 10.0f);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(100, 100, 100, 255));
+			ImGui::Text("End Tang ");
+			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			ImGui::SliderFloat3("##ENDTANG", glm::value_ptr(renderData.rdSplineEndTangent), -10.0f, 10.0f);
+		}
+		ImGui::Unindent();
+	}
 
 
 	/* Create text for triangle count */

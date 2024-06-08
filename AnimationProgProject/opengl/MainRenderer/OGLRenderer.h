@@ -2,13 +2,15 @@
 
 #include <vector>
 #include <string>
-
+#include <memory>
 // OpenGL Mathematics Lib
 #include <glm/glm.hpp>
 // Matrix roation
 #include <glm/gtc/matrix_transform.hpp>
 // Perpective view
 #include <glm/ext/matrix_clip_space.hpp>
+//Quaternions
+#include <glm/gtx/quaternion.hpp>
 
 
 // Loader generator to make openGL functions human readable and available
@@ -25,7 +27,10 @@
 #include "./../userInterface/UserInterface.h"
 #include "./../timer/Timer.h"
 #include "./../camera/Camera.h"
-
+#include "../models/Model.h"
+#include "./../models/arrow/ArrowModel.h"
+#include "./../models/arrow/CoordArrowsModel.h"
+#include "./../models/spline/SplineModel.h"
 
 #include "OGLRenderData.h"
 
@@ -69,16 +74,45 @@ class OGLRenderer {
 
 	private:
 	
+		OGLRenderData mRenderData{};
+
 		Shader mBasicShader{};
 		Shader mChangedShader{};
+		Shader mLineShader{};
+
 		FrameBuffer mFrameBuffer{};
 		VertexBuffer mVertexBuffer{};
 		UniformBuffer mUniformBuffer{};
+
 		Texture mTex{};
-		OGLRenderData mRenderData{};
-		UserInterface mUserInterface{};
+
 		Timer mUIGenerateTimer{};
+
 		Camera mCamera{};
+
+		UserInterface mUserInterface{};
+
+		CoordArrowsModel mCoordArrowsModel{};
+		OGLMesh mCoordArrowsMesh{};
+
+		ArrowModel mArrowModel{};
+		OGLMesh mStartPosArrowMesh{};
+		OGLMesh mEndPosArrowMesh{};
+		OGLMesh mQuatPosArrowMesh{};
+
+		SplineModel mSplineModel{};
+		OGLMesh mSplineMesh{};
+
+		std::unique_ptr<Model> mModel = nullptr;
+		std::unique_ptr<OGLMesh> mModelMesh = nullptr;
+		std::unique_ptr<OGLMesh> mAllMeshes = nullptr;
+		unsigned int mLineIndexCount = 0;
+
+		glm::quat mQuatModelOrientation[2] = { glm::quat() , glm::quat() };
+		glm::quat mQuatModelOrientationConjugate[2] = { glm::quat() , glm::quat() };
+		glm::quat mQuatMix = glm::quat();
+		glm::quat mQuatMixConjugate = glm::quat();
+
 
 		glm::mat4 mViewMatrix = glm::mat4(1.0f);
 		glm::mat4 mProjectionMatrix = glm::mat4(1.0f);

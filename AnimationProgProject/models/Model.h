@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <glm/glm.hpp>
-#include "./mainRenderer/OGLRenderer.h"
+#include "./mainRenderer/OGLRenderData.h"
 
 class Model {
 public:
