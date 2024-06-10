@@ -8,7 +8,7 @@ class Texture {
 
 		// Loads the texture and generates an openGL texture 
 		// @param Filepath to texture
-		bool loadTexture(std::string textureFileName);
+		bool loadTexture(std::string textureFileName, bool flipImage = true);
 
 
 		// Enables modifications to the texture (For when we want to use multiple textures and avoid any unexpected results)

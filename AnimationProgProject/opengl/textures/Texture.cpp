@@ -1,9 +1,8 @@
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include "Texture.h"
 #include "../Logger/Logger.h"
 
-bool Texture::loadTexture(std::string textureName) {
+bool Texture::loadTexture(std::string textureName,bool flipImage) {
 
 	Logger::log(1, "%s: Started loading texture...\n", __FUNCTION__);
 
@@ -11,9 +10,9 @@ bool Texture::loadTexture(std::string textureName) {
 	int texWidth, texHeight, numOfChannels;
 
 	// Flips the image on the vertical axis (picture has origin at top-left while texture has it at bottom-left)
-	stbi_set_flip_vertically_on_load(true);
+	stbi_set_flip_vertically_on_load(flipImage);
 
-	// Creates memory area, read the file, flips the image (since we set that to true) and fill the output params
+	// Creates memory area, read the file and fill the output params
 	unsigned char* textureData = stbi_load(textureName.c_str(), &texWidth, &texHeight, &numOfChannels, 0);
 
 	// If the texture wasn't able to load for some reason then free the allocated memory area or else memory leak

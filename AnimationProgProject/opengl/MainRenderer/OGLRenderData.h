@@ -32,6 +32,9 @@ struct OGLRenderData {
 	// Number of triangles drawn
 	unsigned int rdTriangleCount = 0;
 
+	// Tirangle count for GLTF model
+	unsigned int rdGltfTriangleCount = 0;
+
 	// Time for a single frame to be created and rendered
 	float rdFrameTime = 0.0f;
 

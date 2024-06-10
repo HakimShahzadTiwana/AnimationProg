@@ -62,6 +62,10 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__, "shader/line.vert", "shader/line.frag");
 		return false;
 	}
+	if (!mGltfShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\gltf.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\gltf.frag")) {
+		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__, "shader/gltf.vert", "shader/gltf.frag");
+		return false;
+	}
 
 	mUserInterface.init(mRenderData);
 
@@ -77,6 +81,17 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	mAllMeshes = std::make_unique<OGLMesh>();
 	Logger::log(1, "%s: global mesh storage initialized\n", __FUNCTION__);
 
+	mGltfModel = std::make_shared<GltfModel>();
+	std::string modelFilename = "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\assets\\Woman.gltf";
+	std::string modelTexFilename = "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Textures\\Woman.png";
+	Logger::log(1, "%s: Gltf model mesh storage initialized\n", __FUNCTION__);
+	
+	if (!mGltfModel->loadModel(mRenderData, modelFilename,modelTexFilename)) {
+		Logger::log(0, "%s:Error - Could not load Gltf model from file.\n", __FUNCTION__);
+		return false;
+	}
+	mGltfModel->uploadIndexBuffer();
+	Logger::log(1, "%s: Gltf model loaded\n", __FUNCTION__);
 
 	// Init successful
 	Logger::log(1, "%s: Renderer Init Successful.\n", __FUNCTION__);
@@ -297,6 +312,7 @@ void OGLRenderer::draw() {
 	});
 	mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mModelMesh->vertices.begin(), mModelMesh->vertices.end());
 
+	mGltfModel->uploadVertexBuffers();
 	uploadData(*mAllMeshes);
 
 	mLineIndexCount = mStartPosArrowMesh.vertices.size() + mEndPosArrowMesh.vertices.size() + mQuatPosArrowMesh.vertices.size() + mCoordArrowsMesh.vertices.size() + mSplineMesh.vertices.size();
@@ -310,6 +326,10 @@ void OGLRenderer::draw() {
 		mVertexBuffer.draw(GL_LINES,0,mLineIndexCount);
 		mVertexBuffer.unbind();
 	}
+
+	// Draw GLTF Model
+	mGltfShader.use();
+	mGltfModel->draw();
 
 	// Draw model last
 	mBasicShader.use();
@@ -508,8 +528,13 @@ void OGLRenderer::cleanup() {
 	// Cleanup FrameBuffer
 	mFrameBuffer.cleanup();
 
-	//Cleanup UserInterface
+	// Cleanup UserInterface
 	mUserInterface.cleanup();
+
+	// Cleanup GLTF Model
+	mGltfModel->cleanup();
+	mGltfModel.reset();
+	mGltfShader.cleanup();
 
 	Logger::log(1, "%s: Renderer cleaned successfully.\n", __FUNCTION__);
 }

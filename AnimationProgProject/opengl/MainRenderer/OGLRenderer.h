@@ -19,18 +19,19 @@
 // Lib for window operations (make sure after glad lib since it detects and changes based on glad)
 #include <GLFW/glfw3.h>
 
-#include "./buffers/frameBuffer/FrameBuffer.h"
-#include "./buffers/vertexBuffer/VertexBuffer.h"
-#include "./buffers/uniformBuffer/UniformBuffer.h"
-#include "./textures/Texture.h"
-#include "./shaders/Shader.h"
-#include "./../userInterface/UserInterface.h"
-#include "./../timer/Timer.h"
-#include "./../camera/Camera.h"
+#include "buffers/frameBuffer/FrameBuffer.h"
+#include "buffers/vertexBuffer/VertexBuffer.h"
+#include "buffers/uniformBuffer/UniformBuffer.h"
+#include "textures/Texture.h"
+#include "shaders/Shader.h"
+#include "../userInterface/UserInterface.h"
+#include "../timer/Timer.h"
+#include "../camera/Camera.h"
 #include "../models/Model.h"
-#include "./../models/arrow/ArrowModel.h"
-#include "./../models/arrow/CoordArrowsModel.h"
-#include "./../models/spline/SplineModel.h"
+#include "../models/arrow/ArrowModel.h"
+#include "../models/arrow/CoordArrowsModel.h"
+#include "../models/spline/SplineModel.h"
+#include "../models/GltfModel.h"
 
 #include "OGLRenderData.h"
 
@@ -79,6 +80,7 @@ class OGLRenderer {
 		Shader mBasicShader{};
 		Shader mChangedShader{};
 		Shader mLineShader{};
+		Shader mGltfShader{};
 
 		FrameBuffer mFrameBuffer{};
 		VertexBuffer mVertexBuffer{};
@@ -106,6 +108,8 @@ class OGLRenderer {
 		std::unique_ptr<Model> mModel = nullptr;
 		std::unique_ptr<OGLMesh> mModelMesh = nullptr;
 		std::unique_ptr<OGLMesh> mAllMeshes = nullptr;
+		std::shared_ptr<GltfModel> mGltfModel = nullptr;
+
 		unsigned int mLineIndexCount = 0;
 
 		glm::quat mQuatModelOrientation[2] = { glm::quat() , glm::quat() };

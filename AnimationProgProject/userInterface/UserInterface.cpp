@@ -156,7 +156,7 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 	// Tell imgui to stay on the same line for the next text
 	ImGui::SameLine();
 	// Convert the triangle count to c string and display text on the same line
-	ImGui::Text(std::to_string(renderData.rdTriangleCount).c_str());
+	ImGui::Text(std::to_string(renderData.rdTriangleCount + renderData.rdGltfTriangleCount).c_str());
 
 	// Add Text widget for window dimensions
 	std::string windowDims = std::to_string(renderData.rdWidth) + "x" + std::to_string(renderData.rdHeight);
