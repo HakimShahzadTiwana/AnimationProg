@@ -31,7 +31,7 @@
 #include "../models/arrow/ArrowModel.h"
 #include "../models/arrow/CoordArrowsModel.h"
 #include "../models/spline/SplineModel.h"
-#include "../models/GltfModel.h"
+#include "../models/gltf/GltfModel.h"
 
 #include "OGLRenderData.h"
 

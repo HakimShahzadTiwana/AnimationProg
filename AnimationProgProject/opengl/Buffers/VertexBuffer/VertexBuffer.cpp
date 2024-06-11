@@ -45,7 +45,7 @@ void VertexBuffer::cleanup() {
 
 void VertexBuffer::uploadData(OGLMesh vertexData) {
 
-	Logger::log(1, "%s: Uploading vertex data to Vertex Buffer...\n", __FUNCTION__);
+	Logger::log(2, "%s: Uploading vertex data to Vertex Buffer...\n", __FUNCTION__);
 
 	// Bind vertex buffer and array
 	glBindVertexArray(mVAO);
@@ -62,22 +62,22 @@ void VertexBuffer::uploadData(OGLMesh vertexData) {
 
 void VertexBuffer::bind() {
 
-	Logger::log(1, "%s: Binding vertex array.\n", __FUNCTION__);
+	Logger::log(2, "%s: Binding vertex array.\n", __FUNCTION__);
 	glBindVertexArray(mVAO);
 }
 
 void VertexBuffer::unbind() {
 
-	Logger::log(1, "%s: Unbinding vertex array.\n", __FUNCTION__);
+	Logger::log(2, "%s: Unbinding vertex array.\n", __FUNCTION__);
 	glBindVertexArray(0);
 }
 
 void VertexBuffer::draw(GLuint mode, unsigned int start,unsigned int num) {
 
-	Logger::log(1, "%s: Drawing...\n", __FUNCTION__);
+	Logger::log(2, "%s: Drawing...\n", __FUNCTION__);
 
 	glDrawArrays(mode, start, num);
 
-	Logger::log(1, "%s: Completed drawing.\n", __FUNCTION__);
+	Logger::log(2, "%s: Completed drawing.\n", __FUNCTION__);
 
 }

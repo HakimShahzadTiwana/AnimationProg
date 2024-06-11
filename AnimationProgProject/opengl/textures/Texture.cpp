@@ -58,13 +58,13 @@ bool Texture::loadTexture(std::string textureName,bool flipImage) {
 
 void Texture::bind() {
 
-	Logger::log(1, "%s: Binding Texture. \n", __FUNCTION__);
+	Logger::log(2, "%s: Binding Texture. \n", __FUNCTION__);
 
 	glBindTexture(GL_TEXTURE_2D, mTex);
 }
 void Texture::unbind() {
 	
-	Logger::log(1, "%s: Unbinding Texture. \n", __FUNCTION__);
+	Logger::log(2, "%s: Unbinding Texture. \n", __FUNCTION__);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

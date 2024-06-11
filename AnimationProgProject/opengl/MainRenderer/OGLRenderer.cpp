@@ -119,12 +119,12 @@ void OGLRenderer::uploadData(OGLMesh vertexData) {
 	
 	//mRenderData.rdTriangleCount = vertexData.vertices.size();
 	mVertexBuffer.uploadData(vertexData);
-	Logger::log(1, "%s: Vertex data uploaded successfully.\n", __FUNCTION__);
+	Logger::log(2, "%s: Vertex data uploaded successfully.\n", __FUNCTION__);
 }
 
 void OGLRenderer::draw() {
 
-	Logger::log(1, "%s: Drawing...\n", __FUNCTION__);
+	Logger::log(2, "%s: Drawing...\n", __FUNCTION__);
 
 
 
@@ -364,7 +364,7 @@ void OGLRenderer::draw() {
 	// Save last tick time
 	lastTickTime = tickTime;
 
-	Logger::log(1, "%s: Time taken to execute draw function %f\n", __FUNCTION__, mRenderData.rdFrameTime);
+	Logger::log(2, "%s: Time taken to execute draw function %f\n", __FUNCTION__, mRenderData.rdFrameTime);
 	
 }
 

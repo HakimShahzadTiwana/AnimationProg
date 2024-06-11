@@ -4,8 +4,11 @@
 #include <memory>
 #include <glad/glad.h>
 #include <tiny_gltf.h>
-#include "./textures/Texture.h"
-#include "./mainRenderer/OGLRenderData.h"
+#include "textures/Texture.h"
+#include "mainRenderer/OGLRenderData.h"
+#include "GltfNode.h"
+
+
 
 class GltfModel {
 public:
@@ -23,7 +26,7 @@ private:
 
 	// pointer to loaded model
 	std::shared_ptr<tinygltf::Model> mModel = nullptr;
-
+	std::shared_ptr<GltfNode> mRootNode = nullptr;
 	// save generated vertex array object
 	GLuint mVAO = 0;
 	// save vertex buffer object for vertex data
@@ -41,6 +44,9 @@ private:
 	void createIndexBuffer();
 
 	int getTriangleCount();
+
+	void getNodes(std::shared_ptr<GltfNode> treeNode);
+	void getNodeData(std::shared_ptr<GltfNode> treeNode, glm::mat4 parentNodeMatrix);
 
 };
 

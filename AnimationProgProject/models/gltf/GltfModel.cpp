@@ -1,5 +1,63 @@
+
+#include <algorithm>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "GltfModel.h"
 #include "../logger/Logger.h"
+
+
+bool  GltfModel::loadModel(OGLRenderData& renderData, std::string modelFilename, std::string textureFilename)
+{
+	// Load texture from file
+	if (!mTex.loadTexture(textureFilename, false))
+	{
+		return false;
+	}
+
+	// Create model pointer
+	mModel = std::make_shared < tinygltf::Model>();
+
+	tinygltf::TinyGLTF gltfLoader;
+	std::string loaderErrors;
+	std::string loaderWarnings;
+	bool result = false;
+	result = gltfLoader.LoadASCIIFromFile(mModel.get(), &loaderErrors, &loaderWarnings, modelFilename);
+	if (!loaderWarnings.empty())
+	{
+		Logger::log(0, "%s: warnings while loading glTF	model:\n % s\n", __FUNCTION__, loaderWarnings.c_str());
+	}
+	if (!loaderErrors.empty())
+	{
+		Logger::log(0, "%s: errors while loading glTF model:\n % s\n", __FUNCTION__, loaderErrors.c_str());
+	}
+	if (!result) {
+		Logger::log(0, "%s error: could not load file '%s'\n", __FUNCTION__, modelFilename.c_str());
+		return false;
+	}
+
+	glGenVertexArrays(1, &mVAO);
+	glBindVertexArray(mVAO);
+	createVertexBuffers();
+	createIndexBuffer();
+	glBindVertexArray(0);
+
+	renderData.rdGltfTriangleCount = getTriangleCount();
+
+	// Get Root data from file and create RootNode
+	int rootData = mModel->scenes.at(0).nodes.at(0);
+	mRootNode = GltfNode::createRoot(rootData);
+
+	// Set Node values for TRS
+	getNodeData(mRootNode, glm::mat4(1.0f));
+
+	// read children of node from glTF file and add empty child node to 
+	getNodes(mRootNode);
+
+	mRootNode->printTree();
+
+	return true;
+}
+
 
 void GltfModel::createVertexBuffers() 
 {
@@ -121,44 +179,59 @@ int GltfModel::getTriangleCount()
 	return indexAccessor.count;
 }
 
-bool  GltfModel::loadModel(OGLRenderData& renderData, std::string modelFilename, std::string textureFilename)
+void GltfModel::getNodes(std::shared_ptr<GltfNode> treeNode)
 {
-	// Load texture from file
-	if (!mTex.loadTexture(textureFilename,false))
+	int	nodeNum = treeNode->getNodeNum();
+	std::vector<int> childNodes = mModel->nodes.at(nodeNum).children;
+
+	// Remove nodes with skin/mesh data because it will confuse the skeleton
+	auto removeIt = std::remove_if(childNodes.begin(), childNodes.end(), [&](int num)
+		{
+			return mModel->nodes.at(num).skin != -1;
+		});
+	childNodes.erase(removeIt, childNodes.end());
+
+	treeNode->addChilds(childNodes);
+
+	glm::mat4 treeNodeMatrix = treeNode->getNodeMatrix();
+
+	for (auto& childNode : treeNode->getChilds()) 
 	{
-		return false;
+		getNodeData(childNode, treeNodeMatrix);
+		getNodes(childNode);
 	}
 
-	// Create model pointer
-	mModel = std::make_shared < tinygltf::Model>();
 
-	tinygltf::TinyGLTF gltfLoader;
-	std::string loaderErrors;
-	std::string loaderWarnings;
-	bool result = false;
-	result = gltfLoader.LoadASCIIFromFile(mModel.get(), &loaderErrors, &loaderWarnings, modelFilename);
-	if (!loaderWarnings.empty()) 
-	{
-		Logger::log(0, "%s: warnings while loading glTF	model:\n % s\n", __FUNCTION__, loaderWarnings.c_str());
-	}
-	if (!loaderErrors.empty()) 
-	{
-		Logger::log(0, "%s: errors while loading glTF model:\n % s\n", __FUNCTION__, loaderErrors.c_str());
-	}
-	if (!result) {
-		Logger::log(0, "%s error: could not load file '%s'\n",	__FUNCTION__, modelFilename.c_str());
-		return false;
-	}
-
-	glGenVertexArrays(1, &mVAO);
-	glBindVertexArray(mVAO);
-	createVertexBuffers();
-	createIndexBuffer();
-	glBindVertexArray(0);
-
-	renderData.rdGltfTriangleCount = getTriangleCount();
-	return true;
 }
+void GltfModel::getNodeData(std::shared_ptr<GltfNode> treeNode, glm::mat4 parentNodeMatrix) 
+{
+	// Get node number
+	int nodeNum = treeNode->getNodeNum();
+	// Get node data by its number from the loaded gltf Model 
+	const tinygltf::Node& node = mModel->nodes.at(nodeNum);
+
+	// Set name
+	treeNode->setNodeName(node.name);
+
+	// Set TRS and get derived data
+	if (node.translation.size()) 
+	{
+		treeNode->setTranslation(glm::make_vec3(node.translation.data()));
+	}
+	if (node.scale.size())
+	{
+		treeNode->setScale(glm::make_vec3(node.scale.data()));
+	}
+	if (node.rotation.size())
+	{
+		treeNode->setRotation(glm::make_quat(node.rotation.data()));
+	}
+
+	treeNode->calculateLocalTRSMatrix();
+	treeNode->calculateNodeMatrix(parentNodeMatrix);
+}
+
+
 
 void GltfModel::cleanup()
 {

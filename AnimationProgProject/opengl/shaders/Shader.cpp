@@ -125,7 +125,7 @@ GLuint Shader::readShader(std::string shaderFileName, GLuint shaderType) {
 
 void Shader::use() {
 
-	Logger::log(1, " %s : Using Shader.\n", __FUNCTION__);
+	Logger::log(2, " %s : Using Shader.\n", __FUNCTION__);
 
 	glUseProgram(mShaderProgram);
 }

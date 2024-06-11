@@ -108,14 +108,14 @@ bool FrameBuffer::checkComplete() {
 
 void FrameBuffer::bindDrawing() {
 
-	Logger::log(1, "%s: Binding frame buffer to draw.\n", __FUNCTION__);
+	Logger::log(2, "%s: Binding frame buffer to draw.\n", __FUNCTION__);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mBuffer);
 }
 
 void FrameBuffer::unbindDrawing() {
 
-	Logger::log(1, "%s: Unbinding frame buffer from draw.\n", __FUNCTION__);
+	Logger::log(2, "%s: Unbinding frame buffer from draw.\n", __FUNCTION__);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
@@ -137,7 +137,7 @@ void FrameBuffer::cleanup() {
 
 void FrameBuffer::drawToScreen() {
 
-	Logger::log(1, "%s: Drawing frame buffer to screen...\n", __FUNCTION__);
+	Logger::log(2, "%s: Drawing frame buffer to screen...\n", __FUNCTION__);
 
 	// Bind the frame buffer to for read
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, mBuffer);
@@ -148,6 +148,6 @@ void FrameBuffer::drawToScreen() {
 	glBlitFramebuffer(0, 0, mBufferWidth, mBufferHeight, 0, 0, mBufferWidth, mBufferHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
-	Logger::log(1, "%s: Completed drawing frame buffer to screen...\n", __FUNCTION__);
+	Logger::log(2, "%s: Completed drawing frame buffer to screen...\n", __FUNCTION__);
 }
 
