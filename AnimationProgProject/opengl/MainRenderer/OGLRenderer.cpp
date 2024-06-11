@@ -182,6 +182,9 @@ void OGLRenderer::draw() {
 	// Combine the the rotation camera position with the view matrix
 	mViewMatrix = mCamera.getViewMatrix(mRenderData);// *view;
 
+	/* glTF vertex skinning */
+	mGltfModel->applyVertexSkinning(mRenderData.rdEnableVertexSkinning);
+
 	mUniformBuffer.uploadUboData(mViewMatrix, mProjectionMatrix);
 
 	// Reset Angle and interp Values to Zero when UI button pressed

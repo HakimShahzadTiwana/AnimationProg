@@ -80,4 +80,6 @@ struct OGLRenderData {
 	glm::vec3 rdSplineEndTangent = glm::vec3(0.0f);
 
 	float rdInterpValue = 0.0f;
+
+	bool rdEnableVertexSkinning = true;
 };

@@ -171,14 +171,14 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 	ImGui::Text(imgWindowPos.c_str());
 
 	/* Create checkbox */
-	static bool checkBoxChecked = false;
-	ImGui::Checkbox("Check Me!", &checkBoxChecked);
+	
+	ImGui::Checkbox("Enable Vertex Skinning", &renderData.rdEnableVertexSkinning);
 
-	if (checkBoxChecked) 
+	if (renderData.rdEnableVertexSkinning)
 	{
 		ImGui::SameLine();
 		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-		ImGui::Text("Yes");
+		ImGui::Text("Enabled");
 		ImGui::PopStyleColor();
 	}
 

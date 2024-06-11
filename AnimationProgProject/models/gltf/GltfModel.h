@@ -21,6 +21,7 @@ public:
 
 	void uploadVertexBuffers();
 	void uploadIndexBuffer();
+	void applyVertexSkinning(bool enableSkinning);
 
 private:
 
@@ -39,14 +40,28 @@ private:
 
 	Texture mTex{};
 
+	// For storing bind pose data
+	std::vector<glm::tvec4<uint16_t>> mJointVec{};
+	std::vector<glm::vec4> mWeightVec{};
+	std::vector<glm::mat4> mInverseBindMatrices{};
+	std::vector<glm::mat4> mJointMatrices{};
+	std::vector<int> mNodeToJoint{};
+	std::vector<int> mAttribAccessors{};
+	std::vector<glm::vec3> mAlteredPositions{};
+
 
 	void createVertexBuffers();
 	void createIndexBuffer();
 
 	int getTriangleCount();
 
+	void getInverseBindMatrices();
+	void getJointData();
+	void getWeightData();
+
 	void getNodes(std::shared_ptr<GltfNode> treeNode);
 	void getNodeData(std::shared_ptr<GltfNode> treeNode, glm::mat4 parentNodeMatrix);
+
 
 };
 

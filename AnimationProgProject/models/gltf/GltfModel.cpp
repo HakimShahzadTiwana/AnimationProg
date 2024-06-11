@@ -43,9 +43,14 @@ bool  GltfModel::loadModel(OGLRenderData& renderData, std::string modelFilename,
 
 	renderData.rdGltfTriangleCount = getTriangleCount();
 
+	getInverseBindMatrices();
+	getJointData();
+	getWeightData();
+	
 	// Get Root data from file and create RootNode
 	int rootData = mModel->scenes.at(0).nodes.at(0);
 	mRootNode = GltfNode::createRoot(rootData);
+
 
 	// Set Node values for TRS
 	getNodeData(mRootNode, glm::mat4(1.0f));
@@ -68,6 +73,8 @@ void GltfModel::createVertexBuffers()
 	// resize vector according to the size of the attributes vector stores in the file
 	mVertexVBO.resize(primitives.attributes.size());
 
+	mAttribAccessors.resize(primitives.attributes.size());
+
 	// Loop over the attributes of the primitive 
 	for (const auto& attrib : primitives.attributes) 
 	{
@@ -88,6 +95,15 @@ void GltfModel::createVertexBuffers()
 		{
 			continue;
 		}
+
+		if (attribType.compare("POSITION")) 
+		{
+			int numPositionEntries = accessor.count;
+			mAlteredPositions.resize(numPositionEntries);
+			Logger::log(1, "%s: loaded %i vertices from glTF file\n", __FUNCTION__,numPositionEntries);
+		}
+
+		mAttribAccessors.at(attributes.at(attribType)) = accessorNum;
 
 		// Save the size of data
 		int dataSize = 1;
@@ -172,12 +188,96 @@ void GltfModel::uploadIndexBuffer()
 
 }
 
+void GltfModel::applyVertexSkinning(bool enableSkinning)
+{
+	const tinygltf::Accessor& accessor = mModel->accessors.at(mAttribAccessors.at(0));
+	const tinygltf::BufferView& bufferView = mModel->bufferViews.at(accessor.bufferView);
+	const tinygltf::Buffer& buffer = mModel->buffers.at(bufferView.buffer);
+
+	std::memcpy(mAlteredPositions.data(), &buffer.data.at(0) + bufferView.byteOffset, bufferView.byteLength);
+
+	if (enableSkinning) {
+		for (int i = 0; i < mJointVec.size(); ++i) {
+			glm::ivec4 jointIndex = glm::make_vec4(mJointVec.at(i));
+			glm::vec4 weightIndex = glm::make_vec4(mWeightVec.at(i));
+			glm::mat4 skinMat = weightIndex.x * mJointMatrices.at(jointIndex.x) + weightIndex.y * mJointMatrices.at(jointIndex.y) + weightIndex.z * mJointMatrices.at(jointIndex.z) + weightIndex.w * mJointMatrices.at(jointIndex.w);
+			mAlteredPositions.at(i) = skinMat * glm::vec4(mAlteredPositions.at(i), 1.0f);
+		}
+	}
+
+}
+
 int GltfModel::getTriangleCount()
 {
 	const tinygltf::Primitive& primitives =	mModel->meshes.at(0).primitives.at(0);
 	const tinygltf::Accessor& indexAccessor = mModel->accessors.at(primitives.indices);
 	return indexAccessor.count;
 }
+
+void GltfModel::getInverseBindMatrices()
+{
+	// Get accessor index for skin 
+	const tinygltf::Skin& skin = mModel->skins.at(0);
+	int invBindMatAccessor = skin.inverseBindMatrices;
+
+	const tinygltf::Accessor& accessor = mModel->accessors.at(invBindMatAccessor);
+	const tinygltf::BufferView& bufferView = mModel->bufferViews.at(accessor.bufferView);
+	const tinygltf::Buffer& buffer = mModel->buffers.at(bufferView.buffer);
+
+	mInverseBindMatrices.resize(skin.joints.size());
+	mJointMatrices.resize(skin.joints.size());
+
+	std::memcpy(mInverseBindMatrices.data(), &buffer.data.at(0) + bufferView.byteOffset, bufferView.byteLength);
+}
+
+void GltfModel::getJointData()
+{
+	// Get Joint acessor attribute
+	std::string jointsAccessorAttrib = "JOINTS_0";
+	int jointsAccessor = mModel->meshes.at(0).primitives.at(0).attributes.at(jointsAccessorAttrib);
+	Logger::log(1, "%s: using accessor %i to get %s\n", __FUNCTION__, jointsAccessor,jointsAccessorAttrib.c_str());
+
+	// Search for joint buffer through acessor
+	const tinygltf::Accessor& accessor = mModel->accessors.at(jointsAccessor);
+	const tinygltf::BufferView& bufferView = mModel->bufferViews.at(accessor.bufferView);
+	const tinygltf::Buffer& buffer = mModel->buffers.at(bufferView.buffer);
+
+
+	int jointVecSize = accessor.count;
+	Logger::log(1, "%s: %i short vec4 in JOINTS_0\n", __FUNCTION__, jointVecSize);
+
+	// Copy joint data into vector
+	mJointVec.resize(jointVecSize);
+	std::memcpy(mJointVec.data(), &buffer.data.at(0) + bufferView.byteOffset,bufferView.byteLength);
+
+	// Save Node to Joint mapping. (Joint index saved at Node number location)
+	mNodeToJoint.resize(mModel->nodes.size());
+	const tinygltf::Skin& skin = mModel->skins.at(0);
+	for (int i = 0; i < skin.joints.size(); ++i) {
+		int destinationNode = skin.joints.at(i);
+		mNodeToJoint.at(destinationNode) = i;
+		Logger::log(2, "%s: joint %i affects node %i\n", __FUNCTION__, i, destinationNode);
+	}
+
+}
+void GltfModel::getWeightData() {
+	std::string weightsAccessorAttrib = "WEIGHTS_0";
+	int weightAccessor = mModel->meshes.at(0).primitives.at(0).attributes.at(weightsAccessorAttrib);
+	Logger::log(1, "%s: using accessor %i to get %s\n", __FUNCTION__, weightAccessor,weightsAccessorAttrib.c_str());
+
+	const tinygltf::Accessor& accessor = mModel->accessors.at(weightAccessor);
+	const tinygltf::BufferView& bufferView = mModel->bufferViews.at(accessor.bufferView);
+	const tinygltf::Buffer& buffer = mModel->buffers.at(bufferView.buffer);
+
+	int weightVecSize = accessor.count;
+	Logger::log(1, "%s: %i vec4 in WEIGHTS_0\n", __FUNCTION__, weightVecSize);
+	mWeightVec.resize(weightVecSize);
+
+	std::memcpy(mWeightVec.data(), &buffer.data.at(0) + bufferView.byteOffset,
+		bufferView.byteLength);
+}
+
+
 
 void GltfModel::getNodes(std::shared_ptr<GltfNode> treeNode)
 {
@@ -229,6 +329,9 @@ void GltfModel::getNodeData(std::shared_ptr<GltfNode> treeNode, glm::mat4 parent
 
 	treeNode->calculateLocalTRSMatrix();
 	treeNode->calculateNodeMatrix(parentNodeMatrix);
+
+	// Store joint transformations
+	mJointMatrices.at(mNodeToJoint.at(nodeNum)) = treeNode->getNodeMatrix() * mInverseBindMatrices.at(mNodeToJoint.at(nodeNum));
 }
 
 
