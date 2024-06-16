@@ -81,5 +81,6 @@ struct OGLRenderData {
 
 	float rdInterpValue = 0.0f;
 
-	bool rdEnableVertexSkinning = true;
+
+	bool rdGPUVertexSkinning = true;
 };

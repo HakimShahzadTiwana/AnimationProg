@@ -21,7 +21,9 @@ public:
 
 	void uploadVertexBuffers();
 	void uploadIndexBuffer();
-	void applyVertexSkinning(bool enableSkinning);
+	void applyCPUVertexSkinning(bool enableSkinning);
+	int getJointMatrixSize();
+	std::vector<glm::mat4> getJointMatrices();
 
 private:
 

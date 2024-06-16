@@ -81,10 +81,12 @@ class OGLRenderer {
 		Shader mChangedShader{};
 		Shader mLineShader{};
 		Shader mGltfShader{};
+		Shader mGltfGPUShader{};
 
 		FrameBuffer mFrameBuffer{};
 		VertexBuffer mVertexBuffer{};
 		UniformBuffer mUniformBuffer{};
+		UniformBuffer mGltfUniformBuffer{};
 
 		Texture mTex{};
 
@@ -123,6 +125,7 @@ class OGLRenderer {
 
 
 		bool mMouseLock = false;
+		bool mModelUploadRequired = true;
 		int mMouseXPos = 0;
 		int mMouseYPos = 0;
 		

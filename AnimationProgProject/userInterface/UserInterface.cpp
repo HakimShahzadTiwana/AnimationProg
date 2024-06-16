@@ -172,9 +172,10 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 
 	/* Create checkbox */
 	
-	ImGui::Checkbox("Enable Vertex Skinning", &renderData.rdEnableVertexSkinning);
+	
+	ImGui::Checkbox("Enable GPU Vertex Skinning", &renderData.rdGPUVertexSkinning);
 
-	if (renderData.rdEnableVertexSkinning)
+	if (renderData.rdGPUVertexSkinning)
 	{
 		ImGui::SameLine();
 		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));

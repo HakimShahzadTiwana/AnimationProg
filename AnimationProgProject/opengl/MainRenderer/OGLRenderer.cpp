@@ -49,7 +49,8 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 		return false;
 	}
 
-	mUniformBuffer.init();
+	size_t uniformMatrixBufferSize = 2 * sizeof(glm::mat4);
+	mUniformBuffer.init(uniformMatrixBufferSize);
 	Logger::log(1, "%s: uniform buffer successfully created\n", __FUNCTION__);
 
 	if (!mChangedShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\changed.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\changed.frag")) {
@@ -64,6 +65,10 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	}
 	if (!mGltfShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\gltf.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\gltf.frag")) {
 		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__, "shader/gltf.vert", "shader/gltf.frag");
+		return false;
+	}
+	if (!mGltfGPUShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\gltf_gpu.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\gltf_gpu.frag")) {
+		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__, "shader/gltf_gpu.vert", "shader/gltf_gpu.frag");
 		return false;
 	}
 
@@ -91,6 +96,12 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 		return false;
 	}
 	mGltfModel->uploadIndexBuffer();
+
+	size_t modelJointMatrixBufferSize = mGltfModel->getJointMatrixSize() * sizeof(glm::mat4);
+	mGltfUniformBuffer.init(modelJointMatrixBufferSize);
+	Logger::log(1, "%s: glTF joint matrix uniform buffer (size %i bytes) successfully created\n", __FUNCTION__, modelJointMatrixBufferSize);
+
+
 	Logger::log(1, "%s: Gltf model loaded\n", __FUNCTION__);
 
 	// Init successful
@@ -183,9 +194,19 @@ void OGLRenderer::draw() {
 	mViewMatrix = mCamera.getViewMatrix(mRenderData);// *view;
 
 	/* glTF vertex skinning */
-	mGltfModel->applyVertexSkinning(mRenderData.rdEnableVertexSkinning);
 
-	mUniformBuffer.uploadUboData(mViewMatrix, mProjectionMatrix);
+	
+	//mGltfModel->applyVertexSkinning(mRenderData.rdEnableVertexSkinning);
+
+	std::vector<glm::mat4> matrixData;
+	matrixData.push_back(mViewMatrix);
+	matrixData.push_back(mProjectionMatrix);
+	mUniformBuffer.uploadUboData(matrixData, 0);
+
+	if (mRenderData.rdGPUVertexSkinning) {
+		mGltfUniformBuffer.uploadUboData(mGltfModel->getJointMatrices(), 1);
+	}
+	
 
 	// Reset Angle and interp Values to Zero when UI button pressed
 	if (mRenderData.rdResetAnglesAndInterp)
@@ -315,7 +336,23 @@ void OGLRenderer::draw() {
 	});
 	mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mModelMesh->vertices.begin(), mModelMesh->vertices.end());
 
-	mGltfModel->uploadVertexBuffers();
+	// upload required data only when switching GPU and CPU 
+	static bool lastGPURenderState = mRenderData.rdGPUVertexSkinning;
+
+	if (lastGPURenderState != mRenderData.rdGPUVertexSkinning) {
+		mModelUploadRequired = true;
+		lastGPURenderState = mRenderData.rdGPUVertexSkinning;
+	}
+	if (mModelUploadRequired) {
+		mGltfModel->uploadVertexBuffers();
+		mModelUploadRequired = false;
+	}
+
+	if (!mRenderData.rdGPUVertexSkinning) {
+		// glTF vertex skinning, overwrites position buffer, needs upload on every frame 
+		mGltfModel->applyCPUVertexSkinning(true);
+	}
+
 	uploadData(*mAllMeshes);
 
 	mLineIndexCount = mStartPosArrowMesh.vertices.size() + mEndPosArrowMesh.vertices.size() + mQuatPosArrowMesh.vertices.size() + mCoordArrowsMesh.vertices.size() + mSplineMesh.vertices.size();
@@ -331,7 +368,14 @@ void OGLRenderer::draw() {
 	}
 
 	// Draw GLTF Model
-	mGltfShader.use();
+	if (mRenderData.rdGPUVertexSkinning)
+	{
+		mGltfGPUShader.use();
+	}
+	else
+	{
+		mGltfShader.use();
+	}
 	mGltfModel->draw();
 
 	// Draw model last
@@ -528,6 +572,7 @@ void OGLRenderer::cleanup() {
 	mVertexBuffer.cleanup();
 	// Cleanup UnfiformBuffer
 	mUniformBuffer.cleanup();
+	mGltfUniformBuffer.cleanup();
 	// Cleanup FrameBuffer
 	mFrameBuffer.cleanup();
 

@@ -188,7 +188,7 @@ void GltfModel::uploadIndexBuffer()
 
 }
 
-void GltfModel::applyVertexSkinning(bool enableSkinning)
+void GltfModel::applyCPUVertexSkinning(bool enableSkinning)
 {
 	const tinygltf::Accessor& accessor = mModel->accessors.at(mAttribAccessors.at(0));
 	const tinygltf::BufferView& bufferView = mModel->bufferViews.at(accessor.bufferView);
@@ -205,6 +205,15 @@ void GltfModel::applyVertexSkinning(bool enableSkinning)
 		}
 	}
 
+}
+
+int GltfModel::getJointMatrixSize()
+{
+	return mJointMatrices.size();
+}
+
+std::vector<glm::mat4> GltfModel::getJointMatrices() {
+	return mJointMatrices;
 }
 
 int GltfModel::getTriangleCount()
