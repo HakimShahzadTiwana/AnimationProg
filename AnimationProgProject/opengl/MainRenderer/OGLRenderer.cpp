@@ -98,7 +98,7 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	mGltfModel->uploadIndexBuffer();
 
 	size_t modelJointMatrixBufferSize = mGltfModel->getJointMatrixSize() * sizeof(glm::mat4);
-	mGltfUniformBuffer.init(modelJointMatrixBufferSize);
+	mGltfShaderStorageBuffer.init(modelJointMatrixBufferSize);
 	Logger::log(1, "%s: glTF joint matrix uniform buffer (size %i bytes) successfully created\n", __FUNCTION__, modelJointMatrixBufferSize);
 
 
@@ -204,7 +204,7 @@ void OGLRenderer::draw() {
 	mUniformBuffer.uploadUboData(matrixData, 0);
 
 	if (mRenderData.rdGPUVertexSkinning) {
-		mGltfUniformBuffer.uploadUboData(mGltfModel->getJointMatrices(), 1);
+		mGltfShaderStorageBuffer.uploadSsboData(mGltfModel->getJointMatrices(), 1);
 	}
 	
 
@@ -572,7 +572,7 @@ void OGLRenderer::cleanup() {
 	mVertexBuffer.cleanup();
 	// Cleanup UnfiformBuffer
 	mUniformBuffer.cleanup();
-	mGltfUniformBuffer.cleanup();
+	mGltfShaderStorageBuffer.cleanup();
 	// Cleanup FrameBuffer
 	mFrameBuffer.cleanup();
 

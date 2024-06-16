@@ -22,6 +22,7 @@
 #include "buffers/frameBuffer/FrameBuffer.h"
 #include "buffers/vertexBuffer/VertexBuffer.h"
 #include "buffers/uniformBuffer/UniformBuffer.h"
+#include "buffers/shaderStorageBuffer/ShaderStorageBuffer.h"
 #include "textures/Texture.h"
 #include "shaders/Shader.h"
 #include "../userInterface/UserInterface.h"
@@ -86,7 +87,7 @@ class OGLRenderer {
 		FrameBuffer mFrameBuffer{};
 		VertexBuffer mVertexBuffer{};
 		UniformBuffer mUniformBuffer{};
-		UniformBuffer mGltfUniformBuffer{};
+		ShaderStorageBuffer mGltfShaderStorageBuffer{};
 
 		Texture mTex{};
 
