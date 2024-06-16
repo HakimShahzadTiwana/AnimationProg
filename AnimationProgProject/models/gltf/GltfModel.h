@@ -4,6 +4,7 @@
 #include <memory>
 #include <glad/glad.h>
 #include <tiny_gltf.h>
+#include <glm/gtx/dual_quaternion.hpp>
 #include "textures/Texture.h"
 #include "mainRenderer/OGLRenderData.h"
 #include "GltfNode.h"
@@ -24,6 +25,8 @@ public:
 	void applyCPUVertexSkinning(bool enableSkinning);
 	int getJointMatrixSize();
 	std::vector<glm::mat4> getJointMatrices();
+	int getJointDualQuatsSize();
+	std::vector<glm::mat2x4> getJointDualQuats();
 
 private:
 
@@ -50,6 +53,7 @@ private:
 	std::vector<int> mNodeToJoint{};
 	std::vector<int> mAttribAccessors{};
 	std::vector<glm::vec3> mAlteredPositions{};
+	std::vector<glm::mat2x4> mJointDualQuats{};
 
 
 	void createVertexBuffers();

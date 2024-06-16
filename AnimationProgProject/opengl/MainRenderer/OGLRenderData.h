@@ -83,4 +83,6 @@ struct OGLRenderData {
 
 
 	bool rdGPUVertexSkinning = true;
+	bool rdGPUDualQuatVertexSkinning = true;
+	bool rdDrawGltfModel = true;
 };

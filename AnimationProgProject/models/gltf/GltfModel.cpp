@@ -1,6 +1,7 @@
 
 #include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include "GltfModel.h"
 #include "../logger/Logger.h"
@@ -216,6 +217,16 @@ std::vector<glm::mat4> GltfModel::getJointMatrices() {
 	return mJointMatrices;
 }
 
+int GltfModel::getJointDualQuatsSize()
+{
+	return mJointDualQuats.size();
+}
+
+std::vector<glm::mat2x4> GltfModel::getJointDualQuats()
+{
+	return mJointDualQuats;
+}
+
 int GltfModel::getTriangleCount()
 {
 	const tinygltf::Primitive& primitives =	mModel->meshes.at(0).primitives.at(0);
@@ -235,6 +246,7 @@ void GltfModel::getInverseBindMatrices()
 
 	mInverseBindMatrices.resize(skin.joints.size());
 	mJointMatrices.resize(skin.joints.size());
+	mJointDualQuats.resize(skin.joints.size());
 
 	std::memcpy(mInverseBindMatrices.data(), &buffer.data.at(0) + bufferView.byteOffset, bufferView.byteLength);
 }
@@ -341,6 +353,25 @@ void GltfModel::getNodeData(std::shared_ptr<GltfNode> treeNode, glm::mat4 parent
 
 	// Store joint transformations
 	mJointMatrices.at(mNodeToJoint.at(nodeNum)) = treeNode->getNodeMatrix() * mInverseBindMatrices.at(mNodeToJoint.at(nodeNum));
+
+	glm::quat orientation;
+	glm::vec3 scale;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::dualquat dq;
+
+	if (glm::decompose(mJointMatrices.at(mNodeToJoint.at(nodeNum)), scale, orientation, translation, skew, perspective)) 
+	{
+		dq[0] = orientation;
+		dq[1] = glm::quat(0.0, translation.x, translation.y, translation.z) * orientation * 0.5f;
+		mJointDualQuats.at(mNodeToJoint.at(nodeNum)) =glm::mat2x4_cast(dq);
+	}
+	else
+	{
+		Logger::log(1, "%s error: could not decompose matrix for node %i\n", __FUNCTION__,nodeNum);
+	}
+
 }
 
 

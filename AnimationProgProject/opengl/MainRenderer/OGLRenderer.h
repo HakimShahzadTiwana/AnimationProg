@@ -83,11 +83,13 @@ class OGLRenderer {
 		Shader mLineShader{};
 		Shader mGltfShader{};
 		Shader mGltfGPUShader{};
+		Shader mGltfGPUDualQuatShader{};
 
 		FrameBuffer mFrameBuffer{};
 		VertexBuffer mVertexBuffer{};
 		UniformBuffer mUniformBuffer{};
 		ShaderStorageBuffer mGltfShaderStorageBuffer{};
+		ShaderStorageBuffer mGltfDualQuatSSBuffer{};
 
 		Texture mTex{};
 
@@ -124,7 +126,7 @@ class OGLRenderer {
 		glm::mat4 mViewMatrix = glm::mat4(1.0f);
 		glm::mat4 mProjectionMatrix = glm::mat4(1.0f);
 
-
+	
 		bool mMouseLock = false;
 		bool mModelUploadRequired = true;
 		int mMouseXPos = 0;

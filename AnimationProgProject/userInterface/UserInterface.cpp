@@ -183,6 +183,18 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 		ImGui::PopStyleColor();
 	}
 
+
+	ImGui::Checkbox("Enable GPU Dual Quat Vertex Skinning", &renderData.rdGPUDualQuatVertexSkinning);
+
+	if (renderData.rdGPUDualQuatVertexSkinning)
+	{
+		ImGui::SameLine();
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+		ImGui::Text("Enabled");
+		ImGui::PopStyleColor();
+	}
+
+
 	/* Create Button for toggling shaders */
 	if (ImGui::Button("Toggle Shader")) 
 	{

@@ -72,6 +72,11 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 		return false;
 	}
 
+	if (!mGltfGPUDualQuatShader.loadShaders("D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\gltf_gpu_dquat.vert", "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Shaders\\gltf_gpu_dquat.frag")) {
+		Logger::log(0, "%s: Error - Could not load shaders. \"%s\" and  \"%s\".\n", __FUNCTION__, "shader/gltf_gpu_dquat.vert", "shader/gltf_gpu_dquat.frag");
+		return false;
+	}
+
 	mUserInterface.init(mRenderData);
 
 	glEnable(GL_CULL_FACE);
@@ -100,6 +105,10 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	size_t modelJointMatrixBufferSize = mGltfModel->getJointMatrixSize() * sizeof(glm::mat4);
 	mGltfShaderStorageBuffer.init(modelJointMatrixBufferSize);
 	Logger::log(1, "%s: glTF joint matrix uniform buffer (size %i bytes) successfully created\n", __FUNCTION__, modelJointMatrixBufferSize);
+
+	size_t modelJointDualQuatBufferSize = mGltfModel->getJointDualQuatsSize() *sizeof(glm::mat2x4);
+	mGltfDualQuatSSBuffer.init(modelJointDualQuatBufferSize);
+	Logger::log(1, "%s: glTF joint dual quaternions shader storage buffer (size %i bytes) successfully created\n", __FUNCTION__, modelJointDualQuatBufferSize);
 
 
 	Logger::log(1, "%s: Gltf model loaded\n", __FUNCTION__);
@@ -204,7 +213,12 @@ void OGLRenderer::draw() {
 	mUniformBuffer.uploadUboData(matrixData, 0);
 
 	if (mRenderData.rdGPUVertexSkinning) {
-		mGltfShaderStorageBuffer.uploadSsboData(mGltfModel->getJointMatrices(), 1);
+		if (mRenderData.rdGPUDualQuatVertexSkinning) {
+			mGltfDualQuatSSBuffer.uploadSsboData(mGltfModel->getJointDualQuats(), 2);
+		}
+		else {
+			mGltfShaderStorageBuffer.uploadSsboData(mGltfModel->getJointMatrices(), 1);
+		}
 	}
 	
 
@@ -347,6 +361,8 @@ void OGLRenderer::draw() {
 		mGltfModel->uploadVertexBuffers();
 		mModelUploadRequired = false;
 	}
+	
+
 
 	if (!mRenderData.rdGPUVertexSkinning) {
 		// glTF vertex skinning, overwrites position buffer, needs upload on every frame 
@@ -368,16 +384,27 @@ void OGLRenderer::draw() {
 	}
 
 	// Draw GLTF Model
-	if (mRenderData.rdGPUVertexSkinning)
+	if (mRenderData.rdDrawGltfModel) 
 	{
-		mGltfGPUShader.use();
+		if (mRenderData.rdGPUVertexSkinning) 
+		{
+			if (mRenderData.rdGPUDualQuatVertexSkinning)
+			{
+				mGltfGPUDualQuatShader.use();
+			}
+			else 
+			{
+				mGltfGPUShader.use();
+			}
+		}
+		else 
+		{
+			mGltfShader.use();
+		}
+		mGltfModel->draw();
 	}
-	else
-	{
-		mGltfShader.use();
-	}
-	mGltfModel->draw();
 
+/*
 	// Draw model last
 	mBasicShader.use();
 
@@ -393,6 +420,7 @@ void OGLRenderer::draw() {
 	// Unbind
 	mVertexBuffer.unbind();
 	mTex.unbind();
+	*/
 	mFrameBuffer.unbindDrawing();
 
 	// Draw content of the frame buffer to the screen
@@ -561,9 +589,12 @@ void OGLRenderer::cleanup() {
 
 	Logger::log(1, "%s: Cleaning up renderer...\n", __FUNCTION__);
 	// Cleanup Shaders
-	mBasicShader.cleanup();
-	mChangedShader.cleanup();
-	mLineShader.cleanup();
+	mBasicShader.use();
+	mChangedShader.use();
+	mLineShader.use();
+	mGltfShader.use();
+	mGltfGPUShader.use();
+	mGltfGPUDualQuatShader.use();
 
 	// Cleanup Texture
 	mTex.cleanup();
@@ -573,6 +604,7 @@ void OGLRenderer::cleanup() {
 	// Cleanup UnfiformBuffer
 	mUniformBuffer.cleanup();
 	mGltfShaderStorageBuffer.cleanup();
+	mGltfDualQuatSSBuffer.cleanup();
 	// Cleanup FrameBuffer
 	mFrameBuffer.cleanup();
 

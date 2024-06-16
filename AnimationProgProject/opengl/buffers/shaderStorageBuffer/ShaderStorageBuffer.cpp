@@ -40,6 +40,27 @@ void ShaderStorageBuffer::uploadSsboData(std::vector<glm::mat4> bufferData, int 
 
 }
 
+void ShaderStorageBuffer::uploadSsboData(std::vector<glm::mat2x4> bufferData, int bindingPoint) 
+{
+	if (bufferData.size() == 0)
+	{
+		return;
+	}
+
+	size_t buffersize = bufferData.size() * sizeof(glm::mat2x4);
+	// Bind buffer
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSsboBuffer);
+
+	// Upload data
+	// PARAMS: BufferType, upload offset in buffer, size of upload, values)
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, buffersize, bufferData.data());
+
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, mSsboBuffer, 0, buffersize);
+
+	// Unbind buffer
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
 void ShaderStorageBuffer::cleanup()
 {
 	glDeleteBuffers(1, &mSsboBuffer);
