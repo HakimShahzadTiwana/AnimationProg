@@ -9,6 +9,7 @@
 #include "mainRenderer/OGLRenderData.h"
 #include "GltfNode.h"
 
+#include "../animations/GltfAnimationClip.h"
 
 
 class GltfModel {
@@ -24,10 +25,16 @@ public:
 	void uploadIndexBuffer();
 	void applyCPUVertexSkinning();
 	int getJointMatrixSize();
-	std::vector<glm::mat4> getJointMatrices();
 	int getJointDualQuatsSize();
+	std::vector<glm::mat4> getJointMatrices();
 	std::vector<glm::mat2x4> getJointDualQuats();
 	std::shared_ptr<OGLMesh> getSkeleton(bool enableSkinning);
+
+
+	void playAnimation(int animNum, float speedDivider);
+	void setAnimationFrame(int animNumber, float time);
+	float getAnimationEndTime(int animNum);
+	std::string getClipName(int animNum);
 
 private:
 
@@ -35,6 +42,7 @@ private:
 	std::shared_ptr<tinygltf::Model> mModel = nullptr;
 	std::shared_ptr<GltfNode> mRootNode = nullptr;
 	std::shared_ptr<OGLMesh> mSkeletonMesh = nullptr;
+
 	// save generated vertex array object
 	GLuint mVAO = 0;
 	// save vertex buffer object for vertex data
@@ -56,6 +64,10 @@ private:
 	std::vector<int> mAttribAccessors{};
 	std::vector<glm::vec3> mAlteredPositions{};
 	std::vector<glm::mat2x4> mJointDualQuats{};
+	std::vector<std::shared_ptr<GltfNode>> mNodeList;
+
+	// Animation
+	std::vector<GltfAnimationClip> mAnimClips{};
 
 	void createVertexBuffers();
 	void createIndexBuffer();
@@ -68,7 +80,12 @@ private:
 
 	void getNodes(std::shared_ptr<GltfNode> treeNode);
 	void getNodeData(std::shared_ptr<GltfNode> treeNode, glm::mat4 parentNodeMatrix);
+	void updateNodeMatrices(std::shared_ptr<GltfNode> treeNode, glm::mat4 parentNodeMatrix);
+	void updateJointMatricesAndQuats(std::shared_ptr<GltfNode> treeNode);
 	void getSkeletonPerNode(std::shared_ptr<GltfNode> treeNode, bool enableSkinning);
+
+	void getAnimations();
+
 
 
 };

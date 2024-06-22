@@ -148,7 +148,38 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 		ImGui::Unindent();
 	}
 
+	if (ImGui::CollapsingHeader("glTF Animation")) 
+	{
+		ImGui::Text("Clip No");
+		ImGui::SameLine();
+		ImGui::SliderInt("##Clip", &renderData.rdAnimClip, 0, renderData.rdAnimClipSize - 1);
+		ImGui::Text("Clip Name: %s", renderData.rdClipName.c_str());
+		ImGui::Checkbox("Play Animation", &renderData.rdPlayAnimation);
+		if (!renderData.rdPlayAnimation)
+		{
+			ImGui::BeginDisabled();
+		}
+		ImGui::Text("Speed ");
+		ImGui::SameLine();
+		ImGui::SliderFloat("##ClipSpeed", &renderData.rdAnimSpeed, 0.0f, 2.0f);
+		if (!renderData.rdPlayAnimation)
+		{
+			ImGui::EndDisabled();
+		}
+		if (renderData.rdPlayAnimation)
+		{
+			ImGui::BeginDisabled();
+		}
+		ImGui::Text("Timepos");
+		ImGui::SameLine();
+		ImGui::SliderFloat("##ClipPos",&renderData.rdAnimTimePosition, 0.0f,renderData.rdAnimEndTime);
+		if (renderData.rdPlayAnimation) 
+		{
+			ImGui::EndDisabled();
+		}
+	}
 
+	
 	/* Create text for triangle count */
 
 	// Print text in new line 

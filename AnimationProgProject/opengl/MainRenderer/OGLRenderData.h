@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <glfw/glfw3.h>
+#include <string>
 
 struct OGLVertex {
 	// Postion Co-ordinates
@@ -86,4 +87,13 @@ struct OGLRenderData {
 	bool rdGPUVertexSkinning = true;
 	bool rdDrawSkeleton = true;
 	bool rdDrawGltfModel = true;
+
+
+	bool rdPlayAnimation = true;
+	int rdAnimClip = 0;
+	int rdAnimClipSize = 0;
+	float rdAnimSpeed = 1.0f;
+	float rdAnimTimePosition = 0.0f;
+	float rdAnimEndTime = 0.0f;
+	std::string rdClipName = "None";
 };

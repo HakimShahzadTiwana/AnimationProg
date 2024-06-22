@@ -185,6 +185,17 @@ void OGLRenderer::draw() {
 	// PARAMS - FOV, Aspect Ratio, Near Z distance, Far Z Distance
 	mProjectionMatrix = glm::perspective(glm::radians(static_cast<float>(mRenderData.rdFieldOfView)),static_cast<float>(mRenderData.rdWidth) / static_cast<float>(mRenderData.rdHeight),0.1f, 100.f);
 
+	mRenderData.rdClipName = mGltfModel->getClipName(mRenderData.rdAnimClip);
+	if (mRenderData.rdPlayAnimation)
+	{
+		mGltfModel->playAnimation(mRenderData.rdAnimClip, mRenderData.rdAnimSpeed);
+	}
+	else 
+	{
+		mRenderData.rdAnimEndTime = mGltfModel->getAnimationEndTime(mRenderData.rdAnimClip);
+		mGltfModel->setAnimationFrame(mRenderData.rdAnimClip, mRenderData.rdAnimTimePosition);
+	}
+
 	// Get time
 	float time = glfwGetTime();
 
@@ -220,11 +231,14 @@ void OGLRenderer::draw() {
 	matrixData.push_back(mProjectionMatrix);
 	mUniformBuffer.uploadUboData(matrixData, 0);
 
-	if (mRenderData.rdGPUVertexSkinning) {
-		if (mRenderData.rdGPUDualQuatVertexSkinning) {
+	if (mRenderData.rdGPUVertexSkinning) 
+	{
+		if (mRenderData.rdGPUDualQuatVertexSkinning)
+		{
 			mGltfDualQuatSSBuffer.uploadSsboData(mGltfModel->getJointDualQuats(), 2);
 		}
-		else {
+		else 
+		{
 			mGltfShaderStorageBuffer.uploadSsboData(mGltfModel->getJointMatrices(), 1);
 		}
 	}
@@ -517,7 +531,6 @@ void OGLRenderer::handleMovementKeys()
 	}
 }
 
-
 void OGLRenderer::handleMouseButtonEvents(int button, int action, int mods)
 {
 	// Get userinterface input/output object
@@ -611,7 +624,6 @@ void OGLRenderer::handleMousePositionEvents(double xPos, double yPos)
 		mMouseYPos = static_cast<int>(yPos);
 	}
 }
-
 
 void OGLRenderer::cleanup() {
 
