@@ -22,17 +22,19 @@ public:
 
 	void uploadVertexBuffers();
 	void uploadIndexBuffer();
-	void applyCPUVertexSkinning(bool enableSkinning);
+	void applyCPUVertexSkinning();
 	int getJointMatrixSize();
 	std::vector<glm::mat4> getJointMatrices();
 	int getJointDualQuatsSize();
 	std::vector<glm::mat2x4> getJointDualQuats();
+	std::shared_ptr<OGLMesh> getSkeleton(bool enableSkinning);
 
 private:
 
 	// pointer to loaded model
 	std::shared_ptr<tinygltf::Model> mModel = nullptr;
 	std::shared_ptr<GltfNode> mRootNode = nullptr;
+	std::shared_ptr<OGLMesh> mSkeletonMesh = nullptr;
 	// save generated vertex array object
 	GLuint mVAO = 0;
 	// save vertex buffer object for vertex data
@@ -41,7 +43,7 @@ private:
 	GLuint mIndexVBO = 0;
 
 	// relation between attrubute type pf glTF model's primitive field and vertex attribute position. (Hardcoded, proper way is to do a dynamic look up of input variables in the shader)
-	std::map<std::string, GLint> attributes = { {"POSITION", 0}, {"NORMAL", 1}, {"TEXCOORD_0", 2} };
+	std::map<std::string, GLint> attributes = { {"POSITION", 0}, {"NORMAL", 1}, {"TEXCOORD_0", 2}, {"JOINTS_0" , 3}, {"WEIGHTS_0", 4}};
 
 	Texture mTex{};
 
@@ -55,7 +57,6 @@ private:
 	std::vector<glm::vec3> mAlteredPositions{};
 	std::vector<glm::mat2x4> mJointDualQuats{};
 
-
 	void createVertexBuffers();
 	void createIndexBuffer();
 
@@ -67,6 +68,7 @@ private:
 
 	void getNodes(std::shared_ptr<GltfNode> treeNode);
 	void getNodeData(std::shared_ptr<GltfNode> treeNode, glm::mat4 parentNodeMatrix);
+	void getSkeletonPerNode(std::shared_ptr<GltfNode> treeNode, bool enableSkinning);
 
 
 };

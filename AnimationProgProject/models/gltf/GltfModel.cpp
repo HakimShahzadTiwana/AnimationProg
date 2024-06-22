@@ -59,6 +59,8 @@ bool  GltfModel::loadModel(OGLRenderData& renderData, std::string modelFilename,
 	// read children of node from glTF file and add empty child node to 
 	getNodes(mRootNode);
 
+	mSkeletonMesh = std::make_shared<OGLMesh>();
+
 	mRootNode->printTree();
 
 	return true;
@@ -92,7 +94,7 @@ void GltfModel::createVertexBuffers()
 		const tinygltf::Buffer& buffer = mModel->buffers[bufferView.buffer];
 
 		// Skip-over/filter-out attribute types that are not needed
-		if (attribType.compare("POSITION") != 0 && attribType.compare("NORMAL") != 0 && attribType.compare("TEXCOORD_0") != 0) 
+		if ((attribType.compare("POSITION") != 0) && (attribType.compare("NORMAL") != 0) && (attribType.compare("TEXCOORD_0") != 0) && (attribType.compare("JOINTS_0") != 0) && ((attribType.compare("WEIGHTS_0") != 0)))	
 		{
 			continue;
 		}
@@ -135,20 +137,23 @@ void GltfModel::createVertexBuffers()
 		case TINYGLTF_COMPONENT_TYPE_FLOAT:
 			dataType = GL_FLOAT;
 			break;
+		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+			dataType = GL_UNSIGNED_SHORT;
+			break;
 		default:
 			Logger::log(0, "%s error: accessor %i uses unknown data type % i\n", __FUNCTION__, accessorNum, dataType);
 			break;
 		}
 		
 		// Create vertex buffer objects
-		glGenBuffers(1, &mVertexVBO[attributes[attribType]]);
+		glGenBuffers(1, &mVertexVBO.at(attributes.at(attribType)));
 		// Bind it to active vertex buffer
-		glBindBuffer(GL_ARRAY_BUFFER, mVertexVBO[attributes[attribType]]);
+		glBindBuffer(GL_ARRAY_BUFFER, mVertexVBO.at(attributes.at(attribType)));
 
 
 		// Configure the created vertex buffer
-		glVertexAttribPointer(attributes[attribType], dataSize, dataType, GL_FALSE, 0, (void*) 0);
-		glEnableVertexAttribArray(attributes[attribType]);
+		glVertexAttribPointer(attributes.at(attribType), dataSize, dataType, GL_FALSE, 0, (void*) 0);
+		glEnableVertexAttribArray(attributes.at(attribType));
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }
@@ -161,8 +166,8 @@ void GltfModel::createIndexBuffer()
 
 void GltfModel::uploadVertexBuffers()
 {
-	// Example model has vertex pos data in accessor 0, normal data in accessor 1, and texture data in accessor 2
-	for (int i = 0; i < 3; i++) 
+	// Refer to attribute map
+	for (int i = 0; i < attributes.size(); i++) 
 	{
 		const tinygltf::Accessor& accessor = mModel->accessors.at(i);
 		const tinygltf::BufferView& bufferView = mModel->bufferViews[accessor.bufferView];
@@ -189,7 +194,7 @@ void GltfModel::uploadIndexBuffer()
 
 }
 
-void GltfModel::applyCPUVertexSkinning(bool enableSkinning)
+void GltfModel::applyCPUVertexSkinning()
 {
 	const tinygltf::Accessor& accessor = mModel->accessors.at(mAttribAccessors.at(0));
 	const tinygltf::BufferView& bufferView = mModel->bufferViews.at(accessor.bufferView);
@@ -197,15 +202,17 @@ void GltfModel::applyCPUVertexSkinning(bool enableSkinning)
 
 	std::memcpy(mAlteredPositions.data(), &buffer.data.at(0) + bufferView.byteOffset, bufferView.byteLength);
 
-	if (enableSkinning) {
-		for (int i = 0; i < mJointVec.size(); ++i) {
-			glm::ivec4 jointIndex = glm::make_vec4(mJointVec.at(i));
-			glm::vec4 weightIndex = glm::make_vec4(mWeightVec.at(i));
-			glm::mat4 skinMat = weightIndex.x * mJointMatrices.at(jointIndex.x) + weightIndex.y * mJointMatrices.at(jointIndex.y) + weightIndex.z * mJointMatrices.at(jointIndex.z) + weightIndex.w * mJointMatrices.at(jointIndex.w);
-			mAlteredPositions.at(i) = skinMat * glm::vec4(mAlteredPositions.at(i), 1.0f);
-		}
+	
+	for (int i = 0; i < mJointVec.size(); ++i) {
+		glm::ivec4 jointIndex = glm::make_vec4(mJointVec.at(i));
+		glm::vec4 weightIndex = glm::make_vec4(mWeightVec.at(i));
+		glm::mat4 skinMat = weightIndex.x * mJointMatrices.at(jointIndex.x) + weightIndex.y * mJointMatrices.at(jointIndex.y) + weightIndex.z * mJointMatrices.at(jointIndex.z) + weightIndex.w * mJointMatrices.at(jointIndex.w);
+		mAlteredPositions.at(i) = skinMat * glm::vec4(mAlteredPositions.at(i), 1.0f);
 	}
-
+	
+	glBindBuffer(GL_ARRAY_BUFFER, mVertexVBO.at(0));
+	glBufferData(GL_ARRAY_BUFFER, bufferView.byteLength, mAlteredPositions.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 int GltfModel::getJointMatrixSize()
@@ -249,6 +256,7 @@ void GltfModel::getInverseBindMatrices()
 	mJointDualQuats.resize(skin.joints.size());
 
 	std::memcpy(mInverseBindMatrices.data(), &buffer.data.at(0) + bufferView.byteOffset, bufferView.byteLength);
+
 }
 
 void GltfModel::getJointData()
@@ -374,16 +382,56 @@ void GltfModel::getNodeData(std::shared_ptr<GltfNode> treeNode, glm::mat4 parent
 
 }
 
+std::shared_ptr<OGLMesh> GltfModel::getSkeleton(bool enableSkinning) {
+	mSkeletonMesh->vertices.resize(mModel->nodes.size() * 2);
+	mSkeletonMesh->vertices.clear();
 
-
-void GltfModel::cleanup()
-{
-	glDeleteBuffers(mVertexVBO.size(), mVertexVBO.data());
-	glDeleteBuffers(1, &mVAO);
-	glDeleteBuffers(1, &mIndexVBO);
-	mTex.cleanup();
-	mModel.reset();
+	/* start from Armature child */
+	getSkeletonPerNode(mRootNode->getChilds().at(0), enableSkinning);
+	return mSkeletonMesh;
 }
+
+void GltfModel::getSkeletonPerNode(std::shared_ptr<GltfNode> treeNode, bool enableSkinning) 
+{
+	glm::vec3 parentPos = glm::vec3(0.0f);
+	if (enableSkinning) 
+	{
+		parentPos = glm::vec3(treeNode->getNodeMatrix() * glm::vec4(1.0f));
+	}
+	else
+	{
+		glm::mat4 bindMatrix = glm::inverse(mInverseBindMatrices.at(mNodeToJoint.at(treeNode->getNodeNum())));
+		parentPos = bindMatrix * treeNode->getNodeMatrix() * glm::vec4(1.0f);
+	}
+
+	OGLVertex parentVertex;
+	parentVertex.position = parentPos;
+	parentVertex.color = glm::vec3(0.0f, 1.0f, 1.0f);
+
+	for (const auto& childNode : treeNode->getChilds())
+	{
+		glm::vec3 childPos = glm::vec3(0.0f);
+		if (enableSkinning)
+		{
+			childPos = glm::vec3(childNode->getNodeMatrix() * glm::vec4(1.0f));
+		}
+		else
+		{
+			glm::mat4 bindMatrix = glm::inverse(mInverseBindMatrices.at(mNodeToJoint.at(childNode->getNodeNum())));
+			childPos = bindMatrix * childNode->getNodeMatrix() * glm::vec4(1.0f);
+		}
+		OGLVertex childVertex;
+		childVertex.position = childPos;
+		childVertex.color = glm::vec3(0.0f, 0.0f, 1.0f);
+
+		mSkeletonMesh->vertices.emplace_back(parentVertex);
+		mSkeletonMesh->vertices.emplace_back(childVertex);
+
+		getSkeletonPerNode(childNode, enableSkinning);
+	}
+}
+
+
 
 void GltfModel::draw() 
 {
@@ -407,5 +455,14 @@ void GltfModel::draw()
 	glBindVertexArray(0);
 	mTex.unbind();
 
+}
+
+void GltfModel::cleanup()
+{
+	glDeleteBuffers(mVertexVBO.size(), mVertexVBO.data());
+	glDeleteBuffers(1, &mVAO);
+	glDeleteBuffers(1, &mIndexVBO);
+	mTex.cleanup();
+	mModel.reset();
 }
 

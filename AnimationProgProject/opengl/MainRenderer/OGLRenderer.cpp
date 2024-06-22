@@ -88,6 +88,10 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	mModelMesh = std::make_unique<OGLMesh>();
 	Logger::log(1, "%s: model mesh storage initialized\n", __FUNCTION__);
 
+	mSkeletonMesh = std::make_shared<OGLMesh>();
+	Logger::log(1, "%s: skeleton mesh storage initialized\n", __FUNCTION__);
+
+
 	mAllMeshes = std::make_unique<OGLMesh>();
 	Logger::log(1, "%s: global mesh storage initialized\n", __FUNCTION__);
 
@@ -206,6 +210,10 @@ void OGLRenderer::draw() {
 
 	
 	//mGltfModel->applyVertexSkinning(mRenderData.rdEnableVertexSkinning);
+	if (mRenderData.rdDrawSkeleton) {
+		mSkeletonMesh = mGltfModel->getSkeleton(true);
+	}
+
 
 	std::vector<glm::mat4> matrixData;
 	matrixData.push_back(mViewMatrix);
@@ -327,6 +335,11 @@ void OGLRenderer::draw() {
 		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mQuatPosArrowMesh.vertices.begin(), mQuatPosArrowMesh.vertices.end());
 	}
 
+	if (mRenderData.rdDrawSkeleton) {
+		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mSkeletonMesh->vertices.begin(), mSkeletonMesh->vertices.end());
+	}
+
+
 	// Draw Spline
 	mSplineMesh.vertices.clear();
 	if (mRenderData.rdDrawSplineLines)
@@ -366,8 +379,16 @@ void OGLRenderer::draw() {
 
 	if (!mRenderData.rdGPUVertexSkinning) {
 		// glTF vertex skinning, overwrites position buffer, needs upload on every frame 
-		mGltfModel->applyCPUVertexSkinning(true);
+		mGltfModel->applyCPUVertexSkinning();
 	}
+
+	if (mRenderData.rdDrawSkeleton) {
+		mSkeletonLineIndexCount = mSkeletonMesh->vertices.size();
+	}
+	else {
+		mSkeletonLineIndexCount = 0;
+	}
+
 
 	uploadData(*mAllMeshes);
 
@@ -421,6 +442,13 @@ void OGLRenderer::draw() {
 	mVertexBuffer.unbind();
 	mTex.unbind();
 	*/
+
+	if (mSkeletonLineIndexCount > 0 && mRenderData.rdDrawSkeleton) {
+		glDisable(GL_DEPTH_TEST);
+		mLineShader.use();
+		mVertexBuffer.bindAndDraw(GL_LINES, mLineIndexCount, mSkeletonLineIndexCount);
+		glEnable(GL_DEPTH_TEST);
+	}
 	mFrameBuffer.unbindDrawing();
 
 	// Draw content of the frame buffer to the screen

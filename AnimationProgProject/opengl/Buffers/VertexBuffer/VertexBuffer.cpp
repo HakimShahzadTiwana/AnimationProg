@@ -81,3 +81,10 @@ void VertexBuffer::draw(GLuint mode, unsigned int start,unsigned int num) {
 	Logger::log(2, "%s: Completed drawing.\n", __FUNCTION__);
 
 }
+
+void VertexBuffer::bindAndDraw(GLuint mode, unsigned int start, unsigned int num)
+{
+	bind();
+	draw(mode, start, num);
+	unbind();
+}

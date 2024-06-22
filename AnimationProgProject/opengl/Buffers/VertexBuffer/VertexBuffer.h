@@ -30,6 +30,9 @@ class VertexBuffer {
 		// @param num - Number of elements to render
 		void draw(GLuint mode, unsigned int start, unsigned int num);
 
+
+		void bindAndDraw(GLuint mode, unsigned int start, unsigned int num);
+
 		// Cleans up vertex buffer
 		void cleanup();
 	

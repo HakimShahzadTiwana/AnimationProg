@@ -114,7 +114,9 @@ class OGLRenderer {
 		std::unique_ptr<OGLMesh> mModelMesh = nullptr;
 		std::unique_ptr<OGLMesh> mAllMeshes = nullptr;
 		std::shared_ptr<GltfModel> mGltfModel = nullptr;
+		std::shared_ptr<OGLMesh> mSkeletonMesh = nullptr;
 
+		unsigned int mSkeletonLineIndexCount = 0;
 		unsigned int mLineIndexCount = 0;
 
 		glm::quat mQuatModelOrientation[2] = { glm::quat() , glm::quat() };

@@ -49,16 +49,16 @@ struct OGLRenderData {
 	// FOV
 	int rdFieldOfView = 90;
 	// Yaw
-	float rdViewAzimuth = 320.0f;
+	float rdViewAzimuth = 0.0f;
 	// Pitch 
 	float rdViewElevation = -15.0f;
-	// Movement
+	// Movemen
 	int rdMoveForward = 0;
 	int rdMoveRight = 0;
 	int rdMoveUp = 0;
 	
 	// Position
-	glm::vec3 rdCameraWorldPosition = glm::vec3(0);
+	glm::vec3 rdCameraWorldPosition = glm::vec3(0.0f,3.0f,5.0f);
 
 
 	// Difference between tewo rendered images
@@ -82,7 +82,8 @@ struct OGLRenderData {
 	float rdInterpValue = 0.0f;
 
 
-	bool rdGPUVertexSkinning = true;
 	bool rdGPUDualQuatVertexSkinning = true;
+	bool rdGPUVertexSkinning = true;
+	bool rdDrawSkeleton = true;
 	bool rdDrawGltfModel = true;
 };
