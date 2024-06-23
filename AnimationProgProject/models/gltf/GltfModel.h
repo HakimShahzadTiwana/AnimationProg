@@ -17,6 +17,8 @@ public:
 
 	bool loadModel(OGLRenderData& renderData, std::string modelFilename, std::string textureFilename);
 
+
+
 	void draw();
 
 	void cleanup();
@@ -29,6 +31,9 @@ public:
 	std::vector<glm::mat4> getJointMatrices();
 	std::vector<glm::mat2x4> getJointDualQuats();
 	std::shared_ptr<OGLMesh> getSkeleton(bool enableSkinning);
+	void setSkeletonSplitNode(int nodeNum);
+	std::string getNodeName(int nodeNum);
+
 
 	// Bind pose and animation blending
 	void playAnimation(int animNum, float speedDivider,float blendFactor);
@@ -71,6 +76,8 @@ private:
 	std::vector<glm::vec3> mAlteredPositions{};
 	std::vector<glm::mat2x4> mJointDualQuats{};
 	std::vector<std::shared_ptr<GltfNode>> mNodeList;
+	std::vector<bool> mAdditiveAnimationMask{};
+	std::vector<bool> mInvertedAdditiveAnimationMask{};
 
 	// Animation
 	std::vector<GltfAnimationClip> mAnimClips{};
@@ -92,7 +99,7 @@ private:
 
 	void getAnimations();
 	void resetNodeData(std::shared_ptr<GltfNode> treeNode,glm::mat4 parentNodeMatrix);
-
+	void updateAdditiveMask(std::shared_ptr<GltfNode> treeNode, int splitNodeNum);
 
 };
 

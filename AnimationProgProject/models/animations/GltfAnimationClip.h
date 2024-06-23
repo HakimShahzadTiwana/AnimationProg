@@ -16,9 +16,9 @@ public:
 	void addChannel(std::shared_ptr<tinygltf::Model> model, tinygltf::Animation anim, tinygltf::AnimationChannel channel);
 
 	// Update the model nodes with data from a specific time point
-	void setAnimationFrame(std::vector<std::shared_ptr<GltfNode>> nodes, float time);
+	void setAnimationFrame(std::vector<std::shared_ptr<GltfNode>> nodes, std::vector<bool> additiveMask, float time);
 
-	void blendAnimationFrame(std::vector<std::shared_ptr<GltfNode>> nodes, float time,float blendFactor);
+	void blendAnimationFrame(std::vector<std::shared_ptr<GltfNode>> nodes, std::vector<bool> additiveMask, float time,float blendFactor);
 
 	float getClipEndTime();
 

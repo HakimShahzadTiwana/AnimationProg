@@ -39,7 +39,7 @@ public:
 
 	// Print Tree structure
 	void printTree();
-
+	std::string getNodeName();
 
 	void blendScale(glm::vec3 scale, float blendFactor);
 	void blendTranslation(glm::vec3 translation,float blendFactor);

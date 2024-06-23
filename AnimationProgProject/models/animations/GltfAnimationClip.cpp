@@ -9,22 +9,25 @@ void GltfAnimationClip::addChannel(std::shared_ptr<tinygltf::Model> model, tinyg
 	mAnimationChannels.push_back(chan);
 }
 
-void GltfAnimationClip::setAnimationFrame(std::vector<std::shared_ptr<GltfNode>> nodes, float time)
+void GltfAnimationClip::setAnimationFrame(std::vector<std::shared_ptr<GltfNode>> nodes, std::vector<bool> additiveMask, float time)
 {
 	for (auto& channel : mAnimationChannels)
 	{
 		int targetNode = channel->getTargetNode();
-		switch (channel->getTargetPath())
+		if (additiveMask.at(targetNode)) 
 		{
-		case ETargetPath::ROTATION:
-			nodes.at(targetNode)->setRotation(channel->getRotation(time));
-			break;
-		case ETargetPath::TRANSLATION:
-			nodes.at(targetNode)->setTranslation(channel->getTranslation(time));
-			break;
-		case ETargetPath::SCALE:
-			nodes.at(targetNode)->setScale(channel->getScaling(time));
-			break;
+			switch (channel->getTargetPath())
+			{
+			case ETargetPath::ROTATION:
+				nodes.at(targetNode)->setRotation(channel->getRotation(time));
+				break;
+			case ETargetPath::TRANSLATION:
+				nodes.at(targetNode)->setTranslation(channel->getTranslation(time));
+				break;
+			case ETargetPath::SCALE:
+				nodes.at(targetNode)->setScale(channel->getScaling(time));
+				break;
+			}
 		}
 	}
 
@@ -37,22 +40,25 @@ void GltfAnimationClip::setAnimationFrame(std::vector<std::shared_ptr<GltfNode>>
 	}
 }
 
-void GltfAnimationClip::blendAnimationFrame(std::vector<std::shared_ptr<GltfNode>> nodes, float time,float blendFactor)
+void GltfAnimationClip::blendAnimationFrame(std::vector<std::shared_ptr<GltfNode>> nodes, std::vector<bool> additiveMask, float time,float blendFactor)
 {
 	for (auto& channel : mAnimationChannels)
 	{
 		int targetNode = channel->getTargetNode();
-		switch (channel->getTargetPath())
+		if (additiveMask.at(targetNode)) 
 		{
-		case ETargetPath::ROTATION:
-			nodes.at(targetNode)->blendRotation(channel->getRotation(time),blendFactor);
-			break;
-		case ETargetPath::TRANSLATION:
-			nodes.at(targetNode)->blendTranslation(channel->getTranslation(time),blendFactor);
-			break;
-		case ETargetPath::SCALE:
-			nodes.at(targetNode)->blendScale(channel->getScaling(time),blendFactor);
-			break;
+			switch (channel->getTargetPath())
+			{
+			case ETargetPath::ROTATION:
+				nodes.at(targetNode)->blendRotation(channel->getRotation(time),blendFactor);
+				break;
+			case ETargetPath::TRANSLATION:
+				nodes.at(targetNode)->blendTranslation(channel->getTranslation(time),blendFactor);
+				break;
+			case ETargetPath::SCALE:
+				nodes.at(targetNode)->blendScale(channel->getScaling(time),blendFactor);
+				break;
+			}
 		}
 	}
 

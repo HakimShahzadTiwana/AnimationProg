@@ -105,6 +105,7 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 		return false;
 	}
 	mGltfModel->uploadIndexBuffer();
+	Logger::log(1, "%s: Gltf model loaded\n", __FUNCTION__);
 
 	size_t modelJointMatrixBufferSize = mGltfModel->getJointMatrixSize() * sizeof(glm::mat4);
 	mGltfShaderStorageBuffer.init(modelJointMatrixBufferSize);
@@ -114,8 +115,8 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	mGltfDualQuatSSBuffer.init(modelJointDualQuatBufferSize);
 	Logger::log(1, "%s: glTF joint dual quaternions shader storage buffer (size %i bytes) successfully created\n", __FUNCTION__, modelJointDualQuatBufferSize);
 
+	mRenderData.rdSkelSplitNode = mRenderData.rdModelNodeCount - 1;
 
-	Logger::log(1, "%s: Gltf model loaded\n", __FUNCTION__);
 
 	// Init successful
 	Logger::log(1, "%s: Renderer Init Successful.\n", __FUNCTION__);
@@ -192,6 +193,30 @@ void OGLRenderer::draw() {
 	if (blendingChanged != mRenderData.rdCrossBlending)
 	{
 		blendingChanged = mRenderData.rdCrossBlending;
+		if (!mRenderData.rdCrossBlending)
+		{
+			mRenderData.rdAdditiveBlending = false;
+		}
+		mGltfModel->resetNodeData();
+	}
+
+	static bool additiveBlendingChanged =mRenderData.rdAdditiveBlending;
+	if (additiveBlendingChanged != mRenderData.rdAdditiveBlending)
+	{
+		additiveBlendingChanged = mRenderData.rdAdditiveBlending;
+		if (!mRenderData.rdAdditiveBlending)
+		{
+			mRenderData.rdSkelSplitNode = mRenderData.rdModelNodeCount - 1;
+		}
+		mGltfModel->resetNodeData();
+	}
+
+	static int skelSplitNode = mRenderData.rdSkelSplitNode;
+	if (skelSplitNode != mRenderData.rdSkelSplitNode) 
+	{
+		mGltfModel->setSkeletonSplitNode(mRenderData.rdSkelSplitNode);
+		skelSplitNode = mRenderData.rdSkelSplitNode;
+		mRenderData.rdSkelSplitNodeName = mGltfModel->getNodeName(mRenderData.rdSkelSplitNode);
 		mGltfModel->resetNodeData();
 	}
 
