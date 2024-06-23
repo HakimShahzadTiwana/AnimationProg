@@ -41,6 +41,10 @@ public:
 	void printTree();
 
 
+	void blendScale(glm::vec3 scale, float blendFactor);
+	void blendTranslation(glm::vec3 translation,float blendFactor);
+	void blendRotation(glm::quat rotation,float blendFactor);
+
 
 private:
 
@@ -55,6 +59,11 @@ private:
 	glm::vec3 mScale = glm::vec3(1.0f);
 	glm::vec3 mTranslation = glm::vec3(0.0f);
 	glm::quat mRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
+	// Blend Data of node
+	glm::vec3 mBlendScale = glm::vec3(1.0f);
+	glm::vec3 mBlendTranslation = glm::vec3(0.0f);
+	glm::quat mBlendRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 
 	// TRS: Translation * Rotation * Scale;
 	glm::mat4 mLocalTRSMatrix = glm::mat4(1.0f);

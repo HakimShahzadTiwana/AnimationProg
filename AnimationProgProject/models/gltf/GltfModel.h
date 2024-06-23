@@ -31,8 +31,8 @@ public:
 	std::shared_ptr<OGLMesh> getSkeleton(bool enableSkinning);
 
 
-	void playAnimation(int animNum, float speedDivider);
-	void setAnimationFrame(int animNumber, float time);
+	void playAnimation(int animNum, float speedDivider,float blendFactor);
+	void blendAnimationFrame(int animNumber, float time,float blendFactor);
 	float getAnimationEndTime(int animNum);
 	std::string getClipName(int animNum);
 

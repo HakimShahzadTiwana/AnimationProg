@@ -96,4 +96,7 @@ struct OGLRenderData {
 	float rdAnimTimePosition = 0.0f;
 	float rdAnimEndTime = 0.0f;
 	std::string rdClipName = "None";
+
+	float rdAnimBlendFactor = 1.0f;
+
 };
