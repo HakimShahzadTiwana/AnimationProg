@@ -83,6 +83,11 @@ void GltfNode::printTree()
 	Logger::log(1, "%s: -- end tree --\n", __FUNCTION__);
 }
 
+std::string GltfNode::getNodeName()
+{
+	return mNodeName;
+}
+
 void GltfNode::blendScale(glm::vec3 scale, float blendFactor)
 {
 	float factor = std::clamp(blendFactor, 0.0f, 1.0f);

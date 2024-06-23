@@ -30,9 +30,15 @@ public:
 	std::vector<glm::mat2x4> getJointDualQuats();
 	std::shared_ptr<OGLMesh> getSkeleton(bool enableSkinning);
 
-
+	// Bind pose and animation blending
 	void playAnimation(int animNum, float speedDivider,float blendFactor);
 	void blendAnimationFrame(int animNumber, float time,float blendFactor);
+
+	// Cross fade blending
+	void playAnimation(int sourceAnimNum, int destAnimNum,float speedDivider, float blendFactor);
+	void crossBlendAnimationFrame(int sourceAnimNumber,int destAnimNumber, float time, float blendFactor);
+
+	void resetNodeData();
 	float getAnimationEndTime(int animNum);
 	std::string getClipName(int animNum);
 
@@ -85,7 +91,7 @@ private:
 	void getSkeletonPerNode(std::shared_ptr<GltfNode> treeNode, bool enableSkinning);
 
 	void getAnimations();
-
+	void resetNodeData(std::shared_ptr<GltfNode> treeNode,glm::mat4 parentNodeMatrix);
 
 
 };

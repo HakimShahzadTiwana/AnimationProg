@@ -186,14 +186,38 @@ void OGLRenderer::draw() {
 	mProjectionMatrix = glm::perspective(glm::radians(static_cast<float>(mRenderData.rdFieldOfView)),static_cast<float>(mRenderData.rdWidth) / static_cast<float>(mRenderData.rdHeight),0.1f, 100.f);
 
 	mRenderData.rdClipName = mGltfModel->getClipName(mRenderData.rdAnimClip);
+	mRenderData.rdCrossBlendDestClipName =mGltfModel->getClipName(mRenderData.rdCrossBlendDestAnimClip);
+
+	static bool blendingChanged = mRenderData.rdCrossBlending;
+	if (blendingChanged != mRenderData.rdCrossBlending)
+	{
+		blendingChanged = mRenderData.rdCrossBlending;
+		mGltfModel->resetNodeData();
+	}
+
 	if (mRenderData.rdPlayAnimation)
 	{
-		mGltfModel->playAnimation(mRenderData.rdAnimClip, mRenderData.rdAnimSpeed,mRenderData.rdAnimBlendFactor);
+		if (mRenderData.rdCrossBlending) 
+		{
+			mGltfModel->playAnimation(mRenderData.rdAnimClip,mRenderData.rdCrossBlendDestAnimClip,mRenderData.rdAnimSpeed,mRenderData.rdAnimCrossBlendFactor);
+		}
+		else
+		{
+			mGltfModel->playAnimation(mRenderData.rdAnimClip, mRenderData.rdAnimSpeed,mRenderData.rdAnimBlendFactor);
+		}
 	}
 	else 
 	{
 		mRenderData.rdAnimEndTime = mGltfModel->getAnimationEndTime(mRenderData.rdAnimClip);
-		mGltfModel->blendAnimationFrame(mRenderData.rdAnimClip, mRenderData.rdAnimTimePosition, mRenderData.rdAnimBlendFactor);
+
+		if (mRenderData.rdCrossBlending) 
+		{
+			mGltfModel->crossBlendAnimationFrame(mRenderData.rdAnimClip,mRenderData.rdCrossBlendDestAnimClip,mRenderData.rdAnimTimePosition,mRenderData.rdAnimCrossBlendFactor);
+		}
+		else
+		{
+			mGltfModel->blendAnimationFrame(mRenderData.rdAnimClip, mRenderData.rdAnimTimePosition, mRenderData.rdAnimBlendFactor);
+		}
 	}
 
 	// Get time

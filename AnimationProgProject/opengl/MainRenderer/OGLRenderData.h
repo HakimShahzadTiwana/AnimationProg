@@ -98,5 +98,8 @@ struct OGLRenderData {
 	std::string rdClipName = "None";
 
 	float rdAnimBlendFactor = 1.0f;
-
+	bool rdCrossBlending = false;
+	int rdCrossBlendDestAnimClip = 0;
+	std::string rdCrossBlendDestClipName = "None";
+	float rdAnimCrossBlendFactor = 0.0f;
 };

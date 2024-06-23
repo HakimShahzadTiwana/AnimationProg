@@ -178,11 +178,45 @@ void UserInterface::createFrame(OGLRenderData& renderData)
 			ImGui::EndDisabled();
 		}
 
-		if (ImGui::CollapsingHeader("glTF Animation Blending")) {
+		if (ImGui::CollapsingHeader("glTF Animation Blending"))
+		{
+			ImGui::Checkbox("Blending Type:",&renderData.rdCrossBlending);
+			ImGui::SameLine();
+			if (renderData.rdCrossBlending) 
+			{
+				ImGui::Text("Cross");
+			}
+			else 
+			{
+				ImGui::Text("Single");
+			}
+			if (renderData.rdCrossBlending) 
+			{
+				ImGui::BeginDisabled();
+			}
+
 			ImGui::Text("Blend Factor");
 			ImGui::SameLine();
-			ImGui::SliderFloat("##BlendFactor",
-				&renderData.rdAnimBlendFactor, 0.0f, 1.0f);
+			ImGui::SliderFloat("##BlendFactor",&renderData.rdAnimBlendFactor, 0.0f, 1.0f);
+			if (renderData.rdCrossBlending) 
+			{
+				ImGui::EndDisabled();
+			}
+			if (!renderData.rdCrossBlending) 
+			{
+				ImGui::BeginDisabled();
+			}
+			ImGui::Text("Dest Clip ");
+			ImGui::SameLine();
+			ImGui::SliderInt("##DestClip", &renderData.rdCrossBlendDestAnimClip, 0,renderData.rdAnimClipSize - 1);
+			ImGui::Text("Dest Clip Name: %s",renderData.rdCrossBlendDestClipName.c_str());
+			ImGui::Text("Cross Blend ");
+			ImGui::SameLine();
+			ImGui::SliderFloat("##CrossBlendFactor", &renderData.rdAnimCrossBlendFactor, 0.0f, 1.0f);
+			if (!renderData.rdCrossBlending)
+			{
+				ImGui::EndDisabled();
+			}
 		}
 	}
 
