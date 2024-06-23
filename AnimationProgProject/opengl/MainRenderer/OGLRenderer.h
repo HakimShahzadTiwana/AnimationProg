@@ -93,7 +93,12 @@ class OGLRenderer {
 
 		Texture mTex{};
 
+		Timer mFrameTimer{};
+		Timer mMatrixGenerateTimer{};
+		Timer mUploadToVBOTimer{};
+		Timer mUploadToUBOTimer{};
 		Timer mUIGenerateTimer{};
+		Timer mUIDrawTimer{};
 
 		Camera mCamera{};
 

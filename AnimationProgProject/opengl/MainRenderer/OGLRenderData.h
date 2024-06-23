@@ -21,6 +21,22 @@ struct OGLMesh {
 	std::vector<OGLVertex> vertices;
 };
 
+enum class skinningMode {
+	linear = 0,
+	dualQuat
+};
+
+enum class replayDirection {
+	forward = 0,
+	backward
+};
+
+enum class blendMode {
+	fadeinout = 0,
+	crossfade,
+	additive
+};
+
 struct OGLRenderData {
 
 	// GFLW Window instance
@@ -38,9 +54,11 @@ struct OGLRenderData {
 
 	// Time for a single frame to be created and rendered
 	float rdFrameTime = 0.0f;
-
-	// Time for a single frame to be created
+	float rdMatrixGenerateTime = 0.0f;
+	float rdUploadToVBOTime = 0.0f;
+	float rdUploadToUBOTime = 0.0f;
 	float rdUIGenerateTime = 0.0f;
+	float rdUIDrawTime = 0.0f;
 
 	// Is the program currently using the second shader
 	bool rdUseChangedShader = false;
@@ -83,28 +101,29 @@ struct OGLRenderData {
 	float rdInterpValue = 0.0f;
 
 
-	bool rdGPUDualQuatVertexSkinning = true;
-	bool rdGPUVertexSkinning = true;
+	skinningMode rdGPUDualQuatVertexSkinning = skinningMode::linear;
 	bool rdDrawSkeleton = true;
 	bool rdDrawGltfModel = true;
 
 
 	bool rdPlayAnimation = true;
+	std::vector<std::string> rdClipNames{};
 	int rdAnimClip = 0;
 	int rdAnimClipSize = 0;
 	float rdAnimSpeed = 1.0f;
 	float rdAnimTimePosition = 0.0f;
 	float rdAnimEndTime = 0.0f;
-	std::string rdClipName = "None";
 
+	replayDirection rdAnimationPlayDirection = replayDirection::forward;
+
+	blendMode rdBlendingMode = blendMode::fadeinout;
 	float rdAnimBlendFactor = 1.0f;
-	bool rdCrossBlending = false;
 	int rdCrossBlendDestAnimClip = 0;
-	std::string rdCrossBlendDestClipName = "None";
 	float rdAnimCrossBlendFactor = 0.0f;
 
 	int rdModelNodeCount = 0;
 	bool rdAdditiveBlending = false;
 	int rdSkelSplitNode = 0;
-	std::string rdSkelSplitNodeName = "None";
+	std::vector<std::string> rdSkelSplitNodeNames{};
+
 };

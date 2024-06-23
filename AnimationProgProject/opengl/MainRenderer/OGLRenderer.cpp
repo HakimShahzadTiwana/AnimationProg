@@ -157,19 +157,18 @@ void OGLRenderer::draw() {
 	double tickTime = glfwGetTime();
 	mRenderData.rdTickDiff = tickTime - lastTickTime;
 
-	// Get Start time
-	static float prevFrameStartTime = 0.0;
-	float frameStartTime = glfwGetTime();
-
+	mRenderData.rdFrameTime = mFrameTimer.stop();
+	mFrameTimer.start();
+	
 	handleMovementKeys();
 
 	mAllMeshes->vertices.clear();
 
-	// Setup //
 
 	// Bind frame buffer object which will let it receive the vertex data
 	mFrameBuffer.bindDrawing();
 
+	// Setup //
 	// Clear screen with a low grey color
 	glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
 	glClearDepth(1.0f);
@@ -180,31 +179,18 @@ void OGLRenderer::draw() {
 	// Hence the back side of the objects will never be seen and the triangles facing "away" don't need to be drawn
 	//glEnable(GL_CULL_FACE);
 
-	// Draw triangles stored in the buffer //
-
+	mMatrixGenerateTimer.start();
 	// Projection Matrix for view of world
 	// PARAMS - FOV, Aspect Ratio, Near Z distance, Far Z Distance
-	mProjectionMatrix = glm::perspective(glm::radians(static_cast<float>(mRenderData.rdFieldOfView)),static_cast<float>(mRenderData.rdWidth) / static_cast<float>(mRenderData.rdHeight),0.1f, 100.f);
+	mProjectionMatrix = glm::perspective(glm::radians(static_cast<float>(mRenderData.rdFieldOfView)), static_cast<float>(mRenderData.rdWidth) / static_cast<float>(mRenderData.rdHeight), 0.1f, 100.f);
+	mViewMatrix = mCamera.getViewMatrix(mRenderData);
 
-	mRenderData.rdClipName = mGltfModel->getClipName(mRenderData.rdAnimClip);
-	mRenderData.rdCrossBlendDestClipName =mGltfModel->getClipName(mRenderData.rdCrossBlendDestAnimClip);
-
-	static bool blendingChanged = mRenderData.rdCrossBlending;
-	if (blendingChanged != mRenderData.rdCrossBlending)
+	
+	static blendMode lastBlendMode = mRenderData.rdBlendingMode;
+	if (lastBlendMode != mRenderData.rdBlendingMode)
 	{
-		blendingChanged = mRenderData.rdCrossBlending;
-		if (!mRenderData.rdCrossBlending)
-		{
-			mRenderData.rdAdditiveBlending = false;
-		}
-		mGltfModel->resetNodeData();
-	}
-
-	static bool additiveBlendingChanged =mRenderData.rdAdditiveBlending;
-	if (additiveBlendingChanged != mRenderData.rdAdditiveBlending)
-	{
-		additiveBlendingChanged = mRenderData.rdAdditiveBlending;
-		if (!mRenderData.rdAdditiveBlending)
+		lastBlendMode = mRenderData.rdBlendingMode;
+		if (mRenderData.rdBlendingMode != blendMode::additive)
 		{
 			mRenderData.rdSkelSplitNode = mRenderData.rdModelNodeCount - 1;
 		}
@@ -212,85 +198,62 @@ void OGLRenderer::draw() {
 	}
 
 	static int skelSplitNode = mRenderData.rdSkelSplitNode;
-	if (skelSplitNode != mRenderData.rdSkelSplitNode) 
+	if (skelSplitNode != mRenderData.rdSkelSplitNode)
 	{
 		mGltfModel->setSkeletonSplitNode(mRenderData.rdSkelSplitNode);
 		skelSplitNode = mRenderData.rdSkelSplitNode;
-		mRenderData.rdSkelSplitNodeName = mGltfModel->getNodeName(mRenderData.rdSkelSplitNode);
 		mGltfModel->resetNodeData();
 	}
 
-	if (mRenderData.rdPlayAnimation)
+	if (mRenderData.rdPlayAnimation) 
 	{
-		if (mRenderData.rdCrossBlending) 
+		if (mRenderData.rdBlendingMode == blendMode::crossfade || mRenderData.rdBlendingMode == blendMode::additive) 
 		{
-			mGltfModel->playAnimation(mRenderData.rdAnimClip,mRenderData.rdCrossBlendDestAnimClip,mRenderData.rdAnimSpeed,mRenderData.rdAnimCrossBlendFactor);
+			mGltfModel->playAnimation(mRenderData.rdAnimClip,mRenderData.rdCrossBlendDestAnimClip, mRenderData.rdAnimSpeed,mRenderData.rdAnimCrossBlendFactor,mRenderData.rdAnimationPlayDirection);
 		}
 		else
 		{
-			mGltfModel->playAnimation(mRenderData.rdAnimClip, mRenderData.rdAnimSpeed,mRenderData.rdAnimBlendFactor);
+			mGltfModel->playAnimation(mRenderData.rdAnimClip, mRenderData.rdAnimSpeed,mRenderData.rdAnimBlendFactor,mRenderData.rdAnimationPlayDirection);
 		}
 	}
-	else 
+	else
 	{
 		mRenderData.rdAnimEndTime = mGltfModel->getAnimationEndTime(mRenderData.rdAnimClip);
-
-		if (mRenderData.rdCrossBlending) 
+		if (mRenderData.rdBlendingMode == blendMode::crossfade || mRenderData.rdBlendingMode == blendMode::additive) 
 		{
-			mGltfModel->crossBlendAnimationFrame(mRenderData.rdAnimClip,mRenderData.rdCrossBlendDestAnimClip,mRenderData.rdAnimTimePosition,mRenderData.rdAnimCrossBlendFactor);
+			mGltfModel->crossBlendAnimationFrame(mRenderData.rdAnimClip,mRenderData.rdCrossBlendDestAnimClip, mRenderData.rdAnimTimePosition, mRenderData.rdAnimCrossBlendFactor);
 		}
-		else
+		else 
 		{
 			mGltfModel->blendAnimationFrame(mRenderData.rdAnimClip, mRenderData.rdAnimTimePosition, mRenderData.rdAnimBlendFactor);
 		}
 	}
 
-	// Get time
-	float time = glfwGetTime();
-
-	glm::mat4 view = glm::mat4(1.0);
-
-	// Load Shader program to enable processing or vertex data
-	if (mRenderData.rdUseChangedShader)
+	if (mRenderData.rdDrawSkeleton)
 	{
-		//mChangedShader.use();
-		// Creates rotation matrix around the z axis by an amount of "time" radians
-		//view = glm::rotate(glm::mat4(1.0f), time, glm::vec3(0.0f, 0.0f, 1.0f));
-	}
-	else
-	{
-		//mBasicShader.use();
-		//view = glm::rotate(glm::mat4(1.0f), -time, glm::vec3(0.0f, 0.0f, 1.0f));
-	}
-
-	// Combine the the rotation camera position with the view matrix
-	mViewMatrix = mCamera.getViewMatrix(mRenderData);// *view;
-
-	/* glTF vertex skinning */
-
-	
-	//mGltfModel->applyVertexSkinning(mRenderData.rdEnableVertexSkinning);
-	if (mRenderData.rdDrawSkeleton) {
 		mSkeletonMesh = mGltfModel->getSkeleton(true);
 	}
 
+	mRenderData.rdMatrixGenerateTime = mMatrixGenerateTimer.stop();
 
+	mUploadToUBOTimer.start();
 	std::vector<glm::mat4> matrixData;
 	matrixData.push_back(mViewMatrix);
 	matrixData.push_back(mProjectionMatrix);
 	mUniformBuffer.uploadUboData(matrixData, 0);
 
-	if (mRenderData.rdGPUVertexSkinning) 
+	if (mRenderData.rdGPUDualQuatVertexSkinning == skinningMode::dualQuat)
 	{
-		if (mRenderData.rdGPUDualQuatVertexSkinning)
-		{
-			mGltfDualQuatSSBuffer.uploadSsboData(mGltfModel->getJointDualQuats(), 2);
-		}
-		else 
-		{
-			mGltfShaderStorageBuffer.uploadSsboData(mGltfModel->getJointMatrices(), 1);
-		}
+		mGltfDualQuatSSBuffer.uploadSsboData(mGltfModel->getJointDualQuats(), 2);
 	}
+	else
+	{
+		mGltfShaderStorageBuffer.uploadSsboData(mGltfModel->getJointMatrices(), 1);
+	}
+
+
+	mRenderData.rdUploadToUBOTime = mUploadToUBOTimer.stop();
+
 	
 
 	// Reset Angle and interp Values to Zero when UI button pressed
@@ -337,6 +300,10 @@ void OGLRenderer::draw() {
 	// position the cube on th current spline position
 	glm::vec3 interpolatedPosition = glm::hermite(mRenderData.rdSplineStartVertex,mRenderData.rdSplineStartTangent,mRenderData.rdSplineEndVertex,mRenderData.rdSplineEndTangent,mRenderData.rdInterpValue);
 
+	/* upload vertex data */
+	mUploadToVBOTimer.start();
+
+	mRenderData.rdUploadToVBOTime = mUploadToVBOTimer.stop();
 	// draw static coordinate system
 	mCoordArrowsMesh.vertices.clear();
 	if (mRenderData.rdDrawWorldCoordArrows)
@@ -398,11 +365,6 @@ void OGLRenderer::draw() {
 		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mQuatPosArrowMesh.vertices.begin(), mQuatPosArrowMesh.vertices.end());
 	}
 
-	if (mRenderData.rdDrawSkeleton) {
-		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mSkeletonMesh->vertices.begin(), mSkeletonMesh->vertices.end());
-	}
-
-
 	// Draw Spline
 	mSplineMesh.vertices.clear();
 	if (mRenderData.rdDrawSplineLines)
@@ -411,121 +373,77 @@ void OGLRenderer::draw() {
 		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mSplineMesh.vertices.begin(), mSplineMesh.vertices.end());
 	}
 
-	// draw model
-	*mModelMesh = mModel->getVertexData();
-	mRenderData.rdTriangleCount = mModelMesh->vertices.size();
-	std::for_each(mModelMesh->vertices.begin(), mModelMesh->vertices.end(), [=](auto& n)
+	if (mRenderData.rdDrawSkeleton)
 	{
-		glm::quat position = glm::quat(0.0f, n.position.x, n.position.y, n.position.z);
-		glm::quat newPosition = mQuatMix * position * mQuatMixConjugate;
-		n.position.x = newPosition.x;
-		n.position.y = newPosition.y;
-		n.position.z = newPosition.z;
-		n.position += n.position + interpolatedPosition;
-
-	});
-	mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mModelMesh->vertices.begin(), mModelMesh->vertices.end());
-
-	// upload required data only when switching GPU and CPU 
-	static bool lastGPURenderState = mRenderData.rdGPUVertexSkinning;
-
-	if (lastGPURenderState != mRenderData.rdGPUVertexSkinning) {
-		mModelUploadRequired = true;
-		lastGPURenderState = mRenderData.rdGPUVertexSkinning;
+		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(), mSkeletonMesh->vertices.begin(), mSkeletonMesh->vertices.end());
 	}
-	if (mModelUploadRequired) {
+
+	uploadData(*mAllMeshes);
+
+	if (mModelUploadRequired) 
+	{
 		mGltfModel->uploadVertexBuffers();
 		mModelUploadRequired = false;
 	}
-	
 
+	mRenderData.rdUploadToVBOTime = mUploadToVBOTimer.stop();
 
-	if (!mRenderData.rdGPUVertexSkinning) {
-		// glTF vertex skinning, overwrites position buffer, needs upload on every frame 
-		mGltfModel->applyCPUVertexSkinning();
-	}
+	mLineIndexCount = mStartPosArrowMesh.vertices.size() + mEndPosArrowMesh.vertices.size() + mQuatPosArrowMesh.vertices.size() + mCoordArrowsMesh.vertices.size() + mSplineMesh.vertices.size();
 
-	if (mRenderData.rdDrawSkeleton) {
+	if (mRenderData.rdDrawSkeleton) 
+	{
 		mSkeletonLineIndexCount = mSkeletonMesh->vertices.size();
 	}
-	else {
+	else 
+	{
 		mSkeletonLineIndexCount = 0;
 	}
 
 
-	uploadData(*mAllMeshes);
-
-	mLineIndexCount = mStartPosArrowMesh.vertices.size() + mEndPosArrowMesh.vertices.size() + mQuatPosArrowMesh.vertices.size() + mCoordArrowsMesh.vertices.size() + mSplineMesh.vertices.size();
-
-	// Draw lines first
-	if (mLineIndexCount > 0)
-	{
-		mLineShader.use();
-
-		mVertexBuffer.bind();
-		mVertexBuffer.draw(GL_LINES,0,mLineIndexCount);
-		mVertexBuffer.unbind();
-	}
-
+	
 	// Draw GLTF Model
-	if (mRenderData.rdDrawGltfModel) 
+	if (mRenderData.rdDrawGltfModel)
 	{
-		if (mRenderData.rdGPUVertexSkinning) 
+		if (mRenderData.rdGPUDualQuatVertexSkinning == skinningMode::dualQuat) 
 		{
-			if (mRenderData.rdGPUDualQuatVertexSkinning)
-			{
-				mGltfGPUDualQuatShader.use();
-			}
-			else 
-			{
-				mGltfGPUShader.use();
-			}
+			mGltfGPUDualQuatShader.use();
 		}
-		else 
+		else
 		{
-			mGltfShader.use();
+			mGltfGPUShader.use();
 		}
 		mGltfModel->draw();
 	}
 
-/*
-	// Draw model last
-	mBasicShader.use();
+	if (mLineIndexCount > 0)
+	{
+		mLineShader.use();
+		mVertexBuffer.bindAndDraw(GL_LINES, 0, mLineIndexCount);
+	}
 
-	// Bind texture to draw textured triangles
-	mTex.bind();
-
-	// Bind vertex buffer so that triangle data is available
-	mVertexBuffer.bind();
-
-	// Sends vertex data to gpu to be processed by the shaders
-	mVertexBuffer.draw(GL_TRIANGLES, mLineIndexCount, mRenderData.rdTriangleCount);
-
-	// Unbind
-	mVertexBuffer.unbind();
-	mTex.unbind();
-	*/
-
-	if (mSkeletonLineIndexCount > 0 && mRenderData.rdDrawSkeleton) {
+	/* draw the skeleton last, disable depth test to overlay */
+	if (mSkeletonLineIndexCount > 0 && mRenderData.rdDrawSkeleton) 
+	{
 		glDisable(GL_DEPTH_TEST);
 		mLineShader.use();
 		mVertexBuffer.bindAndDraw(GL_LINES, mLineIndexCount, mSkeletonLineIndexCount);
 		glEnable(GL_DEPTH_TEST);
 	}
+
 	mFrameBuffer.unbindDrawing();
+
 
 	// Draw content of the frame buffer to the screen
 	mFrameBuffer.drawToScreen();
+
 
 	mUIGenerateTimer.start();
 	mUserInterface.createFrame(mRenderData);
 	mRenderData.rdUIGenerateTime = mUIGenerateTimer.stop();
 
+	mUIDrawTimer.start();
 	mUserInterface.render();
-
-	// Calculate time taken to complete function
-	mRenderData.rdFrameTime = frameStartTime - prevFrameStartTime;
-	prevFrameStartTime = frameStartTime;
+	mRenderData.rdUIDrawTime = mUIDrawTimer.stop();
 
 	// Save last tick time
 	lastTickTime = tickTime;

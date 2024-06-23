@@ -36,11 +36,11 @@ public:
 
 
 	// Bind pose and animation blending
-	void playAnimation(int animNum, float speedDivider,float blendFactor);
+	void playAnimation(int animNum, float speedDivider,float blendFactor, replayDirection direction);
 	void blendAnimationFrame(int animNumber, float time,float blendFactor);
 
 	// Cross fade blending
-	void playAnimation(int sourceAnimNum, int destAnimNum,float speedDivider, float blendFactor);
+	void playAnimation(int sourceAnimNum, int destAnimNum,float speedDivider, float blendFactor,replayDirection direction);
 	void crossBlendAnimationFrame(int sourceAnimNumber,int destAnimNumber, float time, float blendFactor);
 
 	void resetNodeData();

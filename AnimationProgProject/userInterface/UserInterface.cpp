@@ -1,330 +1,461 @@
 #include <string>
+
+#include <glm/glm.hpp>
+#include <glm/gtx/string_cast.hpp>
+
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtc/type_ptr.hpp>
+
 #include "UserInterface.h"
 
-void UserInterface::init(OGLRenderData& renderData)
-{
-	// Required for proper init
-	IMGUI_CHECKVERSION();
-	//Searches for imgui.ini which contains setting of ImGuiv widgets, if .ini doesnt exsist it will create one 
-	ImGui::CreateContext();
+void UserInterface::init(OGLRenderData& renderData) {
+    IMGUI_CHECKVERSION();
 
-	// Init the Glfw backend using the GLFW window, and set true to create its own keyboard/mouse callbacks 
-	ImGui_ImplGlfw_InitForOpenGL(renderData.rdWindow, true);
+    ImGui::CreateContext();
 
-	// Init OpenGL backend with the same version shaders we're using
-	const char* glslVersion = "#version 460 core";
-	ImGui_ImplOpenGL3_Init(glslVersion);
+    ImGui_ImplGlfw_InitForOpenGL(renderData.rdWindow, true);
 
+    const char* glslVersion = "#version 460 core";
+    ImGui_ImplOpenGL3_Init(glslVersion);
+
+    ImGui::StyleColorsDark();
+
+    /* init plot vectors */
+    mFPSValues.resize(mNumFPSValues);
+    mFrameTimeValues.resize(mNumFrameTimeValues);
+    mModelUploadValues.resize(mNumModelUploadValues);
+    mMatrixGenerationValues.resize(mNumMatrixGenerationValues);
+    mMatrixUploadValues.resize(mNumMatrixUploadValues);
+    mUiGenValues.resize(mNumUiGenValues);
+    mUiDrawValues.resize(mNumUiDrawValues);
 }
 
-void UserInterface::createFrame(OGLRenderData& renderData)
-{
-	// Create new frames in the backends and imgui 
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
+void UserInterface::createFrame(OGLRenderData& renderData) {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
 
-	/*Overlay window of imgui*/
+    ImGuiWindowFlags imguiWindowFlags = 0;
+    //imguiWindowFlags |= ImGuiWindowFlags_NoCollapse;
+    //imguiWindowFlags |= ImGuiWindowFlags_NoResize;
+    //imguiWindowFlags |= ImGuiWindowFlags_NoMove;
 
-	// Set to allow changing properties of the imgui window like for resizing 
-	ImGuiWindowFlags imGuiWindowFlags = 0;
+    ImGui::SetNextWindowBgAlpha(0.8f);
 
-	// Set transparency of the window
-	ImGui::SetNextWindowBgAlpha(0.8f);
+    ImGui::Begin("Control", nullptr, imguiWindowFlags);
 
+    static float newFps = 0.0f;
+    /* avoid inf values (division by zero) */
+    if (renderData.rdFrameTime > 0.0) {
+        newFps = 1.0f / renderData.rdFrameTime * 1000.f;
+    }
+    /* make an averge value to avoid jumps */
+    mFramesPerSecond = (mAveragingAlpha * mFramesPerSecond) + (1.0f - mAveragingAlpha) * newFps;
 
-	// Starts a new window 
-	// Params - Title of window, pointer to bool that is set to true when window is closed, windowflags
-	ImGui::Begin("Control", nullptr, imGuiWindowFlags);
+    /* clamp manual input on all sliders to min/max */
+    ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp;
 
-	// Get FPS
-	static float newFps = 0.0f;
-	if (renderData.rdFrameTime > 0.0) {
-		newFps = 1.0f / renderData.rdFrameTime;
-	}
-	framesPerSecond = (averagingAlpha * framesPerSecond) + (1.0f - averagingAlpha) * newFps;
+    static double updateTime = 0.0;
 
-	/*Text widget for FPS*/
-	ImGui::Text("FPS:");
-	ImGui::SameLine();
-	ImGui::Text(std::to_string(framesPerSecond).c_str());
-	//Add a horizontal line beneath the fps text 
-	ImGui::Separator();
+    /* avoid literal double compares */
+    if (updateTime < 0.000001) {
+        updateTime = ImGui::GetTime();
+    }
 
-	/* Text Widget for UI Generation Time (CreateFrame) */
-	ImGui::Text("UI Generation Time:");
-	ImGui::SameLine();
-	ImGui::Text(std::to_string(renderData.rdUIGenerateTime).c_str());
-	ImGui::SameLine();
-	ImGui::Text("ms");
-	ImGui::Separator();
+    static int fpsOffset = 0;
+    static int frameTimeOffset = 0;
+    static int modelUploadOffset = 0;
+    static int matrixGenOffset = 0;
+    static int matrixUploadOffset = 0;
+    static int uiGenOffset = 0;
+    static int uiDrawOffset = 0;
 
+    while (updateTime < ImGui::GetTime()) {
+        mFPSValues.at(fpsOffset) = mFramesPerSecond;
+        fpsOffset = ++fpsOffset % mNumFPSValues;
 
-	/* Create text widget for camera data */
-	ImGui::Text("View Azimuth:");
-	ImGui::SameLine();
-	ImGui::Text("%s", std::to_string
-	(renderData.rdViewAzimuth).c_str());
-	ImGui::Text("View Elevation:");
-	ImGui::SameLine();
-	ImGui::Text("%s", std::to_string(renderData.rdViewElevation).c_str());
-	ImGui::Text("Camera Position:");
-	ImGui::SameLine();
-	ImGui::Text("%s", glm::to_string(renderData.rdCameraWorldPosition).c_str());
-	ImGui::Separator();
+        mFrameTimeValues.at(frameTimeOffset) = renderData.rdFrameTime;
+        frameTimeOffset = ++frameTimeOffset % mNumFrameTimeValues;
 
-	/* Slerp + Spline Section */
+        mModelUploadValues.at(modelUploadOffset) = renderData.rdUploadToVBOTime;
+        modelUploadOffset = ++modelUploadOffset % mNumModelUploadValues;
 
-	if (ImGui::CollapsingHeader("Slerp + Spline"))
-	{
-		ImGui::Indent();
+        mMatrixGenerationValues.at(matrixGenOffset) = renderData.rdMatrixGenerateTime;
+        matrixGenOffset = ++matrixGenOffset % mNumMatrixGenerationValues;
 
+        mMatrixUploadValues.at(matrixUploadOffset) = renderData.rdUploadToUBOTime;
+        matrixUploadOffset = ++matrixUploadOffset % mNumMatrixUploadValues;
 
-		if (ImGui::Button("Reset All"))
-		{
-			renderData.rdResetAnglesAndInterp = true;
-		}
+        mUiGenValues.at(uiGenOffset) = renderData.rdUIGenerateTime;
+        uiGenOffset = ++uiGenOffset % mNumUiGenValues;
 
-		ImGui::Text("Interpolate");
-		ImGui::SameLine();
-		ImGui::SliderFloat("##Interp", &renderData.rdInterpValue, 0.0f, 1.0f);
+        mUiDrawValues.at(uiDrawOffset) = renderData.rdUIDrawTime;
+        uiDrawOffset = ++uiDrawOffset % mNumUiDrawValues;
 
-		if (ImGui::CollapsingHeader("Slerp"))
-		{
-			ImGui::Checkbox("Draw World Coordinate Arrows", &renderData.rdDrawWorldCoordArrows);
-			ImGui::Checkbox("Draw Model Coordinate Arrows", &renderData.rdDrawModelCoordArrows);
+        updateTime += 1.0 / 30.0;
+    }
 
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
-			ImGui::Text("X Rotation ");
-			ImGui::PopStyleColor();
-			ImGui::SameLine();
-			ImGui::SliderInt2("##ROTX", renderData.rdRotXAngle.data(), 0, 360);
+    ImGui::BeginGroup();
+    ImGui::Text("FPS:");
+    ImGui::SameLine();
+    ImGui::Text("%s", std::to_string(mFramesPerSecond).c_str());
+    ImGui::EndGroup();
 
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-			ImGui::Text("Y Rotation ");
-			ImGui::PopStyleColor();
-			ImGui::SameLine();
-			ImGui::SliderInt2("##ROTY", renderData.rdRotYAngle.data(), 0, 360);
+    if (ImGui::IsItemHovered()) {
+        ImGui::BeginTooltip();
+        float averageFPS = 0.0f;
+        for (const auto value : mFPSValues) {
+            averageFPS += value;
+        }
+        averageFPS /= static_cast<float>(mNumFPSValues);
+        std::string fpsOverlay = "now:     " + std::to_string(mFramesPerSecond) + "\n30s avg: " + std::to_string(averageFPS);
+        ImGui::Text("FPS");
+        ImGui::SameLine();
+        ImGui::PlotLines("##FrameTimes", mFPSValues.data(), mFPSValues.size(), fpsOffset, fpsOverlay.c_str(), 0.0f, FLT_MAX,
+            ImVec2(0, 80));
+        ImGui::EndTooltip();
+    }
 
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 255, 255));
-			ImGui::Text("Z Rotation ");
-			ImGui::PopStyleColor();
-			ImGui::SameLine();
-			ImGui::SliderInt2("##ROTZ", renderData.rdRotZAngle.data(), 0, 360);
-		}
+    if (ImGui::CollapsingHeader("Info")) {
+        ImGui::Text("Triangles:");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdTriangleCount + renderData.rdGltfTriangleCount).c_str());
 
-		if (ImGui::CollapsingHeader("Spline"))
-		{
-			ImGui::Checkbox("Draw spline lines", &renderData.rdDrawSplineLines);
+        std::string windowDims = std::to_string(renderData.rdWidth) + "x" + std::to_string(renderData.rdHeight);
+        ImGui::Text("Window Dimensions:");
+        ImGui::SameLine();
+        ImGui::Text("%s", windowDims.c_str());
 
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
-			ImGui::Text("Start Vec ");
-			ImGui::PopStyleColor();
-			ImGui::SameLine();
-			ImGui::SliderFloat3("##STARTVEC", glm::value_ptr(renderData.rdSplineStartVertex), -10.0f, 10.0f);
-
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
-			ImGui::Text("Start Tang ");
-			ImGui::PopStyleColor();
-			ImGui::SameLine();
-			ImGui::SliderFloat3("##STARTTANG", glm::value_ptr(renderData.rdSplineStartTangent), -10.0f, 10.0f);
-
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(100, 100, 100, 255));
-			ImGui::Text("End Vec ");
-			ImGui::PopStyleColor();
-			ImGui::SameLine();
-			ImGui::SliderFloat3("##ENDVEC", glm::value_ptr(renderData.rdSplineEndVertex), -10.0f, 10.0f);
-
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(100, 100, 100, 255));
-			ImGui::Text("End Tang ");
-			ImGui::PopStyleColor();
-			ImGui::SameLine();
-			ImGui::SliderFloat3("##ENDTANG", glm::value_ptr(renderData.rdSplineEndTangent), -10.0f, 10.0f);
-		}
-		ImGui::Unindent();
-	}
-
-	if (ImGui::CollapsingHeader("glTF Animation")) 
-	{
-		ImGui::Text("Clip No");
-		ImGui::SameLine();
-		ImGui::SliderInt("##Clip", &renderData.rdAnimClip, 0, renderData.rdAnimClipSize - 1);
-		ImGui::Text("Clip Name: %s", renderData.rdClipName.c_str());
-		ImGui::Checkbox("Play Animation", &renderData.rdPlayAnimation);
-		if (!renderData.rdPlayAnimation)
-		{
-			ImGui::BeginDisabled();
-		}
-		ImGui::Text("Speed ");
-		ImGui::SameLine();
-		ImGui::SliderFloat("##ClipSpeed", &renderData.rdAnimSpeed, 0.0f, 2.0f);
-		if (!renderData.rdPlayAnimation)
-		{
-			ImGui::EndDisabled();
-		}
-		if (renderData.rdPlayAnimation)
-		{
-			ImGui::BeginDisabled();
-		}
-		ImGui::Text("Timepos");
-		ImGui::SameLine();
-		ImGui::SliderFloat("##ClipPos",&renderData.rdAnimTimePosition, 0.0f,renderData.rdAnimEndTime);
-		if (renderData.rdPlayAnimation) 
-		{
-			ImGui::EndDisabled();
-		}
-
-		if (ImGui::CollapsingHeader("glTF Animation Blending"))
-		{
-			ImGui::Checkbox("Blending Type:",&renderData.rdCrossBlending);
-			ImGui::SameLine();
-			if (renderData.rdCrossBlending) 
-			{
-				ImGui::Text("Cross");
-			}
-			else 
-			{
-				ImGui::Text("Single");
-			}
-			if (renderData.rdCrossBlending) 
-			{
-				ImGui::BeginDisabled();
-			}
-
-			ImGui::Text("Blend Factor");
-			ImGui::SameLine();
-			ImGui::SliderFloat("##BlendFactor",&renderData.rdAnimBlendFactor, 0.0f, 1.0f);
-			if (renderData.rdCrossBlending) 
-			{
-				ImGui::EndDisabled();
-			}
-			if (!renderData.rdCrossBlending) 
-			{
-				ImGui::BeginDisabled();
-			}
-			ImGui::Text("Dest Clip ");
-			ImGui::SameLine();
-			ImGui::SliderInt("##DestClip", &renderData.rdCrossBlendDestAnimClip, 0,renderData.rdAnimClipSize - 1);
-			ImGui::Text("Dest Clip Name: %s",renderData.rdCrossBlendDestClipName.c_str());
-			ImGui::Text("Cross Blend ");
-			ImGui::SameLine();
-			ImGui::SliderFloat("##CrossBlendFactor", &renderData.rdAnimCrossBlendFactor, 0.0f, 1.0f);
-			
-			ImGui::Checkbox("Additive Blending", &renderData.rdAdditiveBlending);
-
-			if (!renderData.rdAdditiveBlending)
-			{
-				ImGui::BeginDisabled();
-			}
-			ImGui::Text("Split Node  ");
-			ImGui::SameLine();
-			ImGui::SliderInt("##SplitNode", &renderData.rdSkelSplitNode, 0,renderData.rdModelNodeCount - 1);
-			ImGui::Text("Split Node Name: %s", renderData.rdSkelSplitNodeName.c_str());
-
-			if (!renderData.rdAdditiveBlending) 
-			{
-				ImGui::EndDisabled();
-			}
-			if (!renderData.rdCrossBlending) {
-				ImGui::EndDisabled();
-			}
-
-		}
-	}
-
-	
-	/* Create text for triangle count */
-
-	// Print text in new line 
-	ImGui::Text("Triangles: ");
-	// Tell imgui to stay on the same line for the next text
-	ImGui::SameLine();
-	// Convert the triangle count to c string and display text on the same line
-	ImGui::Text(std::to_string(renderData.rdTriangleCount + renderData.rdGltfTriangleCount).c_str());
-
-	// Add Text widget for window dimensions
-	std::string windowDims = std::to_string(renderData.rdWidth) + "x" + std::to_string(renderData.rdHeight);
-	ImGui::Text("Window Dimensions: ");
-	ImGui::SameLine();
-	ImGui::Text(windowDims.c_str());
-
-	// Add Text widget for image window position by getting the position from imgui itself
-	std::string imgWindowPos = std::to_string(static_cast<int>(ImGui::GetWindowPos().x)) + std::to_string(static_cast<int>(ImGui::GetWindowPos().y));
-	ImGui::Text("ImGui Window Position: ");
-	ImGui::SameLine();
-	ImGui::Text(imgWindowPos.c_str());
-
-	/* Create checkbox */
-	
-	
-	ImGui::Checkbox("Enable GPU Vertex Skinning", &renderData.rdGPUVertexSkinning);
-
-	if (renderData.rdGPUVertexSkinning)
-	{
-		ImGui::SameLine();
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-		ImGui::Text("Enabled");
-		ImGui::PopStyleColor();
-	}
+        std::string imgWindowPos = std::to_string(static_cast<int>(ImGui::GetWindowPos().x)) + "/" + std::to_string(static_cast<int>(ImGui::GetWindowPos().y));
+        ImGui::Text("ImGui Window Position:");
+        ImGui::SameLine();
+        ImGui::Text("%s", imgWindowPos.c_str());
+    }
 
 
-	ImGui::Checkbox("Enable GPU Dual Quat Vertex Skinning", &renderData.rdGPUDualQuatVertexSkinning);
+    if (ImGui::CollapsingHeader("Timers")) {
+        ImGui::BeginGroup();
+        ImGui::Text("Frame Time:");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdFrameTime).c_str());
+        ImGui::SameLine();
+        ImGui::Text("ms");
+        ImGui::EndGroup();
 
-	if (renderData.rdGPUDualQuatVertexSkinning)
-	{
-		ImGui::SameLine();
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-		ImGui::Text("Enabled");
-		ImGui::PopStyleColor();
-	}
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            float averageFrameTime = 0.0f;
+            for (const auto value : mFrameTimeValues) {
+                averageFrameTime += value;
+            }
+            averageFrameTime /= static_cast<float>(mNumMatrixGenerationValues);
+            std::string frameTimeOverlay = "now:     " + std::to_string(renderData.rdFrameTime)
+                + " ms\n30s avg: " + std::to_string(averageFrameTime) + " ms";
+            ImGui::Text("Frame Time       ");
+            ImGui::SameLine();
+            ImGui::PlotLines("##FrameTime", mFrameTimeValues.data(), mFrameTimeValues.size(), frameTimeOffset,
+                frameTimeOverlay.c_str(), 0.0f, FLT_MAX, ImVec2(0, 80));
+            ImGui::EndTooltip();
+        }
 
+        ImGui::BeginGroup();
+        ImGui::Text("Model Upload Time:");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdUploadToVBOTime).c_str());
+        ImGui::SameLine();
+        ImGui::Text("ms");
+        ImGui::EndGroup();
 
-	/* Create Button for toggling shaders */
-	if (ImGui::Button("Toggle Shader")) 
-	{
-		renderData.rdUseChangedShader = !renderData.rdUseChangedShader;
-	}
-	ImGui::SameLine();
-	if (!renderData.rdUseChangedShader) 
-	{
-		ImGui::Text("Basic Shader");
-	}
-	else 
-	{
-		ImGui::Text("Changed Shader");
-	}
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            float averageModelUpload = 0.0f;
+            for (const auto value : mModelUploadValues) {
+                averageModelUpload += value;
+            }
+            averageModelUpload /= static_cast<float>(mNumModelUploadValues);
+            std::string modelUploadOverlay = "now:     " + std::to_string(renderData.rdUploadToVBOTime)
+                + " ms\n30s avg: " + std::to_string(averageModelUpload) + " ms";
+            ImGui::Text("VBO Upload");
+            ImGui::SameLine();
+            ImGui::PlotLines("##ModelUploadTimes", mModelUploadValues.data(), mModelUploadValues.size(), modelUploadOffset,
+                modelUploadOverlay.c_str(), 0.0f, FLT_MAX, ImVec2(0, 80));
+            ImGui::EndTooltip();
+        }
 
-	/* Slider for FOV */
-	ImGui::Text("Field of View");
-	ImGui::SameLine();
+        ImGui::BeginGroup();
+        ImGui::Text("Matrix Generation Time:");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdMatrixGenerateTime).c_str());
+        ImGui::SameLine();
+        ImGui::Text("ms");
+        ImGui::EndGroup();
 
-	// Slider
-	// Params -  ## Disables trailing text, pointer to current value, min value , max value
-	ImGui::SliderInt("##FOV", &renderData.rdFieldOfView, 40, 150);
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            float averageMatGen = 0.0f;
+            for (const auto value : mMatrixGenerationValues) {
+                averageMatGen += value;
+            }
+            averageMatGen /= static_cast<float>(mNumMatrixGenerationValues);
+            std::string matrixGenOverlay = "now:     " + std::to_string(renderData.rdMatrixGenerateTime)
+                + " ms\n30s avg: " + std::to_string(averageMatGen) + " ms";
+            ImGui::Text("Matrix Generation");
+            ImGui::SameLine();
+            ImGui::PlotLines("##MatrixGenTimes", mMatrixGenerationValues.data(), mMatrixGenerationValues.size(), matrixGenOffset,
+                matrixGenOverlay.c_str(), 0.0f, FLT_MAX, ImVec2(0, 80));
+            ImGui::EndTooltip();
+        }
 
-	ImGui::End();
+        ImGui::BeginGroup();
+        ImGui::Text("Matrix Upload Time:");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdUploadToUBOTime).c_str());
+        ImGui::SameLine();
+        ImGui::Text("ms");
+        ImGui::EndGroup();
 
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            float averageMatrixUpload = 0.0f;
+            for (const auto value : mMatrixUploadValues) {
+                averageMatrixUpload += value;
+            }
+            averageMatrixUpload /= static_cast<float>(mNumMatrixUploadValues);
+            std::string matrixUploadOverlay = "now:     " + std::to_string(renderData.rdUploadToVBOTime)
+                + " ms\n30s avg: " + std::to_string(averageMatrixUpload) + " ms";
+            ImGui::Text("UBO Upload");
+            ImGui::SameLine();
+            ImGui::PlotLines("##MatrixUploadTimes", mMatrixUploadValues.data(), mMatrixUploadValues.size(), matrixUploadOffset,
+                matrixUploadOverlay.c_str(), 0.0f, FLT_MAX, ImVec2(0, 80));
+            ImGui::EndTooltip();
+        }
 
+        ImGui::BeginGroup();
+        ImGui::Text("UI Generation Time:");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdUIGenerateTime).c_str());
+        ImGui::SameLine();
+        ImGui::Text("ms");
+        ImGui::EndGroup();
 
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            float averageUiGen = 0.0f;
+            for (const auto value : mUiGenValues) {
+                averageUiGen += value;
+            }
+            averageUiGen /= static_cast<float>(mNumUiGenValues);
+            std::string uiGenOverlay = "now:     " + std::to_string(renderData.rdUIGenerateTime)
+                + " ms\n30s avg: " + std::to_string(averageUiGen) + " ms";
+            ImGui::Text("UI Generation");
+            ImGui::SameLine();
+            ImGui::PlotLines("##ModelUpload", mUiGenValues.data(), mUiGenValues.size(), uiGenOffset,
+                uiGenOverlay.c_str(), 0.0f, FLT_MAX, ImVec2(0, 80));
+            ImGui::EndTooltip();
+        }
 
+        ImGui::BeginGroup();
+        ImGui::Text("UI Draw Time:");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdUIDrawTime).c_str());
+        ImGui::SameLine();
+        ImGui::Text("ms");
+        ImGui::EndGroup();
 
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            float averageUiDraw = 0.0f;
+            for (const auto value : mUiDrawValues) {
+                averageUiDraw += value;
+            }
+            averageUiDraw /= static_cast<float>(mNumUiDrawValues);
+            std::string uiDrawOverlay = "now:     " + std::to_string(renderData.rdUIDrawTime)
+                + " ms\n30s avg: " + std::to_string(averageUiDraw) + " ms";
+            ImGui::Text("UI Draw");
+            ImGui::SameLine();
+            ImGui::PlotLines("##UIDrawTimes", mUiDrawValues.data(), mUiDrawValues.size(), uiGenOffset,
+                uiDrawOverlay.c_str(), 0.0f, FLT_MAX, ImVec2(0, 80));
+            ImGui::EndTooltip();
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Camera")) {
+        ImGui::Text("Camera Position:");
+        ImGui::SameLine();
+        ImGui::Text("%s", glm::to_string(renderData.rdCameraWorldPosition).c_str());
+
+        ImGui::Text("View Azimuth:");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdViewAzimuth).c_str());
+
+        ImGui::Text("View Elevation:");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdViewElevation).c_str());
+
+        ImGui::Text("Field of View");
+        ImGui::SameLine();
+        ImGui::SliderInt("##FOV", &renderData.rdFieldOfView, 40, 150, "%d", flags);
+    }
+
+    if (ImGui::CollapsingHeader("glTF Model")) {
+        ImGui::Checkbox("Draw Model", &renderData.rdDrawGltfModel);
+        ImGui::Checkbox("Draw Skeleton", &renderData.rdDrawSkeleton);
+
+        ImGui::Text("Vertex Skinning:");
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Linear",renderData.rdGPUDualQuatVertexSkinning == skinningMode::linear))
+        {
+            renderData.rdGPUDualQuatVertexSkinning = skinningMode::linear;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Dual Quaternion",renderData.rdGPUDualQuatVertexSkinning == skinningMode::dualQuat))
+        {
+            renderData.rdGPUDualQuatVertexSkinning = skinningMode::dualQuat;
+        }
+    }
+
+    if (ImGui::CollapsingHeader("glTF Animation")) {
+        ImGui::Checkbox("Play Animation", &renderData.rdPlayAnimation);
+
+        if (!renderData.rdPlayAnimation) {
+            ImGui::BeginDisabled();
+        }
+
+        ImGui::Text("Animation Direction:");
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Forward",
+            renderData.rdAnimationPlayDirection == replayDirection::forward))
+        {
+            renderData.rdAnimationPlayDirection = replayDirection::forward;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Backward",
+            renderData.rdAnimationPlayDirection == replayDirection::backward)) 
+        {
+            renderData.rdAnimationPlayDirection = replayDirection::backward;
+        }
+
+        if (!renderData.rdPlayAnimation) {
+            ImGui::EndDisabled();
+        }
+
+        ImGui::Text("Clip   ");
+        ImGui::SameLine();
+        if (ImGui::BeginCombo("##ClipCombo",renderData.rdClipNames.at(renderData.rdAnimClip).c_str())) 
+        {
+            for (int i = 0; i < renderData.rdClipNames.size(); ++i) 
+            {
+                const bool isSelected = (renderData.rdAnimClip == i);
+                if (ImGui::Selectable(renderData.rdClipNames.at(i).c_str(), isSelected))
+                {
+                    renderData.rdAnimClip = i;
+                }
+
+                if (isSelected) 
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
+
+        if (renderData.rdPlayAnimation)
+        {
+            ImGui::Text("Speed  ");
+            ImGui::SameLine();
+            ImGui::SliderFloat("##ClipSpeed", &renderData.rdAnimSpeed, 0.0f, 2.0f, "%.3f", flags);
+        }
+        else 
+        {
+            ImGui::Text("Timepos");
+            ImGui::SameLine();
+            ImGui::SliderFloat("##ClipPos", &renderData.rdAnimTimePosition, 0.0f, renderData.rdAnimEndTime, "%.3f", flags);
+        }
+    }
+
+    if (ImGui::CollapsingHeader("glTF Animation Blending")) {
+        ImGui::Text("Blending Type:");
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Fade In/Out",
+            renderData.rdBlendingMode == blendMode::fadeinout)) {
+            renderData.rdBlendingMode = blendMode::fadeinout;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Crossfading",
+            renderData.rdBlendingMode == blendMode::crossfade)) {
+            renderData.rdBlendingMode = blendMode::crossfade;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Additive",
+            renderData.rdBlendingMode == blendMode::additive)) {
+            renderData.rdBlendingMode = blendMode::additive;
+        }
+
+        if (renderData.rdBlendingMode == blendMode::fadeinout) {
+            ImGui::Text("Blend Factor");
+            ImGui::SameLine();
+            ImGui::SliderFloat("##BlendFactor", &renderData.rdAnimBlendFactor, 0.0f, 1.0f, "%.3f",
+                flags);
+        }
+
+        if (renderData.rdBlendingMode == blendMode::crossfade ||
+            renderData.rdBlendingMode == blendMode::additive) {
+            ImGui::Text("Dest Clip   ");
+            ImGui::SameLine();
+            if (ImGui::BeginCombo("##DestClipCombo",
+                renderData.rdClipNames.at(renderData.rdCrossBlendDestAnimClip).c_str())) {
+                for (int i = 0; i < renderData.rdClipNames.size(); ++i) {
+                    const bool isSelected = (renderData.rdCrossBlendDestAnimClip == i);
+                    if (ImGui::Selectable(renderData.rdClipNames.at(i).c_str(), isSelected)) {
+                        renderData.rdCrossBlendDestAnimClip = i;
+                    }
+
+                    if (isSelected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            ImGui::Text("Cross Blend ");
+            ImGui::SameLine();
+            ImGui::SliderFloat("##CrossBlendFactor", &renderData.rdAnimCrossBlendFactor, 0.0f, 1.0f,
+                "%.3f", flags);
+        }
+
+        if (renderData.rdBlendingMode == blendMode::additive) {
+            ImGui::Text("Split Node  ");
+            ImGui::SameLine();
+            if (ImGui::BeginCombo("##SplitNodeCombo",
+                renderData.rdSkelSplitNodeNames.at(renderData.rdSkelSplitNode).c_str())) {
+                for (int i = 0; i < renderData.rdSkelSplitNodeNames.size(); ++i) {
+                    if (renderData.rdSkelSplitNodeNames.at(i).compare("(invalid)") != 0) {
+                        const bool isSelected = (renderData.rdSkelSplitNode == i);
+                        if (ImGui::Selectable(renderData.rdSkelSplitNodeNames.at(i).c_str(), isSelected)) {
+                            renderData.rdSkelSplitNode = i;
+                        }
+
+                        if (isSelected) {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+                }
+                ImGui::EndCombo();
+            }
+        }
+
+    }
+
+    ImGui::End();
 }
 
-void UserInterface::render()
-{
-	// Draw the created widgets into the buffer and screen
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+void UserInterface::render() {
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void UserInterface::cleanup()
-{
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
+void UserInterface::cleanup() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }

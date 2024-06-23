@@ -67,7 +67,6 @@ bool  GltfModel::loadModel(OGLRenderData& renderData, std::string modelFilename,
 
 	// Set Node values for TRS
 	getNodeData(mRootNode, glm::mat4(1.0f));
-
 	// read children of node from glTF file and add empty child node to 
 	getNodes(mRootNode);
 
@@ -76,8 +75,20 @@ bool  GltfModel::loadModel(OGLRenderData& renderData, std::string modelFilename,
 	mRootNode->printTree();
 
 	getAnimations();
-
 	renderData.rdAnimClipSize = mAnimClips.size();
+	for (auto clip : mAnimClips) 
+	{
+		renderData.rdClipNames.push_back(clip.getClipName());
+	}
+
+	for (const auto& node : mNodeList) {
+		if (node) {
+			renderData.rdSkelSplitNodeNames.push_back(node->getNodeName());
+		}
+		else {
+			renderData.rdSkelSplitNodeNames.push_back("(invalid)");
+		}
+	}
 
 	return true;
 }
@@ -498,16 +509,32 @@ void GltfModel::getAnimations()
 	}
 }
 
-void GltfModel::playAnimation(int animNum, float speedDivider,float blendFactor) 
+void GltfModel::playAnimation(int animNum, float speedDivider,float blendFactor, replayDirection direction) 
 {
 	double currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-	blendAnimationFrame(animNum,std::fmod(currentTime / 1000.0 * speedDivider, mAnimClips.at(animNum).getClipEndTime()),blendFactor);
+
+	if (direction == replayDirection::backward) 
+	{
+		blendAnimationFrame(animNum, mAnimClips.at(animNum).getClipEndTime() - std::fmod(currentTime / 1000.0 * speedDivider, mAnimClips.at(animNum).getClipEndTime()), blendFactor);
+	}
+	else {
+		blendAnimationFrame(animNum, std::fmod(currentTime / 1000.0 * speedDivider, mAnimClips.at(animNum).getClipEndTime()), blendFactor);
+	}
 }
 
-void GltfModel::playAnimation(int sourceAnimNumber, int destAnimNumber, float speedDivider, float blendFactor) {
+void GltfModel::playAnimation(int sourceAnimNumber, int destAnimNumber, float speedDivider, float blendFactor,replayDirection direction)
+{
+
 	double currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-	crossBlendAnimationFrame(sourceAnimNumber, destAnimNumber, std::fmod(currentTime / 1000.0 * speedDivider, mAnimClips.at(sourceAnimNumber).getClipEndTime()), blendFactor);
-	updateNodeMatrices(mRootNode, glm::mat4(1.0f));
+	if (direction == replayDirection::backward) 
+	{
+		crossBlendAnimationFrame(sourceAnimNumber, destAnimNumber,mAnimClips.at(sourceAnimNumber).getClipEndTime() - std::fmod(currentTime / 1000.0 * speedDivider,mAnimClips.at(sourceAnimNumber).getClipEndTime()), blendFactor);
+	}
+	else 
+	{
+		crossBlendAnimationFrame(sourceAnimNumber, destAnimNumber,std::fmod(currentTime / 1000.0 * speedDivider,mAnimClips.at(sourceAnimNumber).getClipEndTime()), blendFactor);
+	}
+	
 }
 
 void GltfModel::blendAnimationFrame(int animNum, float time,float blendFactor) 
