@@ -117,6 +117,10 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 
 	mRenderData.rdSkelSplitNode = mRenderData.rdModelNodeCount - 1;
 
+	mRenderData.rdIkEffectorNode = 19;
+	mRenderData.rdIkRootNode = 26;
+	mGltfModel->setInverseKinematicsNodes(mRenderData.rdIkEffectorNode,mRenderData.rdIkRootNode);
+	mGltfModel->setNumIKIterations(mRenderData.rdIkIterations);
 
 	// Init successful
 	Logger::log(1, "%s: Renderer Init Successful.\n", __FUNCTION__);
@@ -205,6 +209,36 @@ void OGLRenderer::draw() {
 		mGltfModel->resetNodeData();
 	}
 
+	static ikMode lastIkMode = mRenderData.rdIkMode;
+	if (lastIkMode != mRenderData.rdIkMode)
+	{
+		mGltfModel->resetNodeData();
+		lastIkMode = mRenderData.rdIkMode;
+		
+		if (mRenderData.rdIkMode == ikMode::off)
+		{
+			mRenderData.rdIKTime = 0.0f;
+		}
+	}
+
+	static int numIKIterations = mRenderData.rdIkIterations;
+	if (numIKIterations != mRenderData.rdIkIterations) 
+	{
+		mGltfModel->setNumIKIterations(mRenderData.rdIkIterations);
+		mGltfModel->resetNodeData();
+		numIKIterations = mRenderData.rdIkIterations;
+	}
+
+	static int ikEffectorNode = mRenderData.rdIkEffectorNode;
+	static int ikRootNode = mRenderData.rdIkRootNode;
+	if (ikEffectorNode != mRenderData.rdIkEffectorNode || ikRootNode != mRenderData.rdIkRootNode)
+	{
+		mGltfModel->setInverseKinematicsNodes(mRenderData.rdIkEffectorNode,mRenderData.rdIkRootNode);
+		mGltfModel->resetNodeData();
+		ikEffectorNode = mRenderData.rdIkEffectorNode;
+		ikRootNode = mRenderData.rdIkRootNode;
+	}
+
 	if (mRenderData.rdPlayAnimation) 
 	{
 		if (mRenderData.rdBlendingMode == blendMode::crossfade || mRenderData.rdBlendingMode == blendMode::additive) 
@@ -228,6 +262,25 @@ void OGLRenderer::draw() {
 			mGltfModel->blendAnimationFrame(mRenderData.rdAnimClip, mRenderData.rdAnimTimePosition, mRenderData.rdAnimBlendFactor);
 		}
 	}
+
+	if (mRenderData.rdIkMode != ikMode::off) 
+	{
+		mIKTimer.start();
+
+		switch (mRenderData.rdIkMode)
+		{
+		case ikMode::ccd:
+			mGltfModel->solveIKByCCD(mRenderData.rdIkTargetPos);
+			break;
+		case ikMode::fabrik:
+			mGltfModel->solveIKByFABRIK(mRenderData.rdIkTargetPos);
+		default:
+			break;
+		}
+		
+		mRenderData.rdIKTime = mIKTimer.stop();
+	}
+
 
 	if (mRenderData.rdDrawSkeleton)
 	{
@@ -365,6 +418,8 @@ void OGLRenderer::draw() {
 		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mQuatPosArrowMesh.vertices.begin(), mQuatPosArrowMesh.vertices.end());
 	}
 
+
+
 	// Draw Spline
 	mSplineMesh.vertices.clear();
 	if (mRenderData.rdDrawSplineLines)
@@ -376,6 +431,21 @@ void OGLRenderer::draw() {
 	if (mRenderData.rdDrawSkeleton)
 	{
 		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(), mSkeletonMesh->vertices.begin(), mSkeletonMesh->vertices.end());
+	}
+
+	/* draw coordiante arrows on target position */
+	mIKCoordArrowsLineIndexCount = 0;
+	if (mRenderData.rdIkMode != ikMode::off) 
+	{
+		mIKCoordArrowsMesh = mCoordArrowsModel.getVertexData();
+		mIKCoordArrowsLineIndexCount = mIKCoordArrowsMesh.vertices.size();
+		std::for_each(mIKCoordArrowsMesh.vertices.begin(), mIKCoordArrowsMesh.vertices.end(),[=](auto& n) 
+			{
+				n.color /= 2.0f;
+				n.position += mRenderData.rdIkTargetPos;
+			});
+
+		mAllMeshes->vertices.insert(mAllMeshes->vertices.end(),mIKCoordArrowsMesh.vertices.begin(), mIKCoordArrowsMesh.vertices.end());
 	}
 
 	uploadData(*mAllMeshes);
@@ -428,6 +498,12 @@ void OGLRenderer::draw() {
 		mLineShader.use();
 		mVertexBuffer.bindAndDraw(GL_LINES, mLineIndexCount, mSkeletonLineIndexCount);
 		glEnable(GL_DEPTH_TEST);
+	}
+
+	if (mIKCoordArrowsLineIndexCount > 0 && mRenderData.rdIkMode != ikMode::off) 
+	{
+		mLineShader.use();
+		mVertexBuffer.bindAndDraw(GL_LINES, mSkeletonLineIndexCount, mIKCoordArrowsLineIndexCount);
 	}
 
 	mFrameBuffer.unbindDrawing();

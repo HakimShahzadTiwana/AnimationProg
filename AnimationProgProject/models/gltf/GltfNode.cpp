@@ -1,5 +1,6 @@
 #include "GltfNode.h"
 #include <algorithm>
+#include <glm/gtx/matrix_decompose.hpp>
 #include "../logger/Logger.h"
 
 std::shared_ptr<GltfNode> GltfNode::createRoot(int rootNodeNum)
@@ -13,6 +14,7 @@ void GltfNode::addChilds(std::vector<int> childNodes)
 {
 	for (const int childNode : childNodes) {
 		std::shared_ptr<GltfNode> child = std::make_shared<GltfNode>();
+		child->mParentNode = shared_from_this();
 		child->mNodeNum = childNode;
 
 		mChildNodes.push_back(child);
@@ -22,6 +24,64 @@ void GltfNode::addChilds(std::vector<int> childNodes)
 std::vector<std::shared_ptr<GltfNode>> GltfNode::getChilds()
 {
 	return mChildNodes;
+}
+
+std::shared_ptr<GltfNode> GltfNode::getParentNode()
+{
+	std::shared_ptr<GltfNode> pNode = mParentNode.lock();
+	
+	if (pNode) 
+	{
+		return pNode;
+	}
+
+	return nullptr;
+}
+
+glm::quat GltfNode::getLocalRotation()
+{
+	return mBlendRotation;
+}
+
+glm::quat GltfNode::getGlobalRotation()
+{
+	glm::quat orientation;
+	glm::vec3 scale;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+
+	if (!glm::decompose(mNodeMatrix, scale, orientation,translation, skew, perspective)) 
+	{
+		return glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	}
+	return glm::inverse(orientation);
+}
+
+glm::vec3 GltfNode::getGlobalPosition()
+{
+	glm::quat orientation;
+	glm::vec3 scale;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+
+	if (!glm::decompose(mNodeMatrix, scale, orientation, translation, skew, perspective))
+	{
+		return glm::vec3(0.0f, 0.0f, 0.0f);
+	}
+	return translation;
+}
+
+void GltfNode::updateNodeAndChildMatrices()
+{
+	calculateNodeMatrix();
+	for (auto& node : mChildNodes) {
+		if (node) {
+			node->updateNodeAndChildMatrices();
+		}
+	}
+
 }
 
 int GltfNode::getNodeNum() 
@@ -63,9 +123,17 @@ void GltfNode::calculateLocalTRSMatrix()
 	mLocalTRSMatrix = tMatrix * rMatrix * sMatrix;
 }
 
-void GltfNode::calculateNodeMatrix(glm::mat4 parentNodeMatrix)
+void GltfNode::calculateNodeMatrix()
 {
+	calculateLocalTRSMatrix();
+	glm::mat4 parentNodeMatrix = glm::mat4(1);
+	std::shared_ptr<GltfNode> pNode = mParentNode.lock();;
+	if (pNode)
+	{
+		parentNodeMatrix = pNode->getNodeMatrix();
+	}
 	mNodeMatrix = parentNodeMatrix * mLocalTRSMatrix;
+
 }
 
 glm::mat4 GltfNode::getNodeMatrix() 

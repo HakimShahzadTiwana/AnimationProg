@@ -7,6 +7,7 @@
 #include <imgui_impl_opengl3.h>
 
 #include "UserInterface.h"
+#include <glm/gtc/type_ptr.hpp>
 
 void UserInterface::init(OGLRenderData& renderData) {
     IMGUI_CHECKVERSION();
@@ -24,6 +25,7 @@ void UserInterface::init(OGLRenderData& renderData) {
     mFPSValues.resize(mNumFPSValues);
     mFrameTimeValues.resize(mNumFrameTimeValues);
     mModelUploadValues.resize(mNumModelUploadValues);
+    mIKValues.resize(mNumIKValues);
     mMatrixGenerationValues.resize(mNumMatrixGenerationValues);
     mMatrixUploadValues.resize(mNumMatrixUploadValues);
     mUiGenValues.resize(mNumUiGenValues);
@@ -69,6 +71,7 @@ void UserInterface::createFrame(OGLRenderData& renderData) {
     static int matrixUploadOffset = 0;
     static int uiGenOffset = 0;
     static int uiDrawOffset = 0;
+    static int ikOffset = 0;
 
     while (updateTime < ImGui::GetTime()) {
         mFPSValues.at(fpsOffset) = mFramesPerSecond;
@@ -79,6 +82,9 @@ void UserInterface::createFrame(OGLRenderData& renderData) {
 
         mModelUploadValues.at(modelUploadOffset) = renderData.rdUploadToVBOTime;
         modelUploadOffset = ++modelUploadOffset % mNumModelUploadValues;
+
+        mIKValues.at(ikOffset) = renderData.rdIKTime;
+        ikOffset = ++ikOffset % mNumIKValues;
 
         mMatrixGenerationValues.at(matrixGenOffset) = renderData.rdMatrixGenerateTime;
         matrixGenOffset = ++matrixGenOffset % mNumMatrixGenerationValues;
@@ -231,6 +237,30 @@ void UserInterface::createFrame(OGLRenderData& renderData) {
         }
 
         ImGui::BeginGroup();
+        ImGui::Text("(IK Generation Time)  :");
+        ImGui::SameLine();
+        ImGui::Text("%s", std::to_string(renderData.rdIKTime).c_str());
+        ImGui::SameLine();
+        ImGui::Text("ms");
+        ImGui::EndGroup();
+
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            float averageIKTime = 0.0f;
+            for (const auto value : mIKValues) {
+                averageIKTime += value;
+            }
+            averageIKTime /= static_cast<float>(mNumIKValues);
+            std::string ikOverlay = "now:     " + std::to_string(renderData.rdIKTime)
+                + " ms\n30s avg: " + std::to_string(averageIKTime) + " ms";
+            ImGui::Text("(IK Generation)");
+            ImGui::SameLine();
+            ImGui::PlotLines("##IKTimes", mIKValues.data(), mIKValues.size(), ikOffset,
+                ikOverlay.c_str(), 0.0f, FLT_MAX, ImVec2(0, 80));
+            ImGui::EndTooltip();
+        }
+
+        ImGui::BeginGroup();
         ImGui::Text("UI Generation Time:");
         ImGui::SameLine();
         ImGui::Text("%s", std::to_string(renderData.rdUIGenerateTime).c_str());
@@ -313,6 +343,77 @@ void UserInterface::createFrame(OGLRenderData& renderData) {
             renderData.rdGPUDualQuatVertexSkinning = skinningMode::dualQuat;
         }
     }
+    if (ImGui::CollapsingHeader("Slerp + Spline"))
+    {
+        ImGui::Indent();
+
+
+        if (ImGui::Button("Reset All"))
+        {
+            renderData.rdResetAnglesAndInterp = true;
+        }
+
+        ImGui::Text("Interpolate");
+        ImGui::SameLine();
+        ImGui::SliderFloat("##Interp", &renderData.rdInterpValue, 0.0f, 1.0f);
+
+        if (ImGui::CollapsingHeader("Slerp"))
+        {
+            ImGui::Checkbox("Draw World Coordinate Arrows", &renderData.rdDrawWorldCoordArrows);
+            ImGui::Checkbox("Draw Model Coordinate Arrows", &renderData.rdDrawModelCoordArrows);
+
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
+            ImGui::Text("X Rotation ");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::SliderInt2("##ROTX", renderData.rdRotXAngle.data(), 0, 360);
+
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+            ImGui::Text("Y Rotation ");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::SliderInt2("##ROTY", renderData.rdRotYAngle.data(), 0, 360);
+
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 255, 255));
+            ImGui::Text("Z Rotation ");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::SliderInt2("##ROTZ", renderData.rdRotZAngle.data(), 0, 360);
+        }
+
+        if (ImGui::CollapsingHeader("Spline"))
+        {
+            ImGui::Checkbox("Draw spline lines", &renderData.rdDrawSplineLines);
+
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+            ImGui::Text("Start Vec ");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::SliderFloat3("##STARTVEC", glm::value_ptr(renderData.rdSplineStartVertex), -10.0f, 10.0f);
+
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+            ImGui::Text("Start Tang ");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::SliderFloat3("##STARTTANG", glm::value_ptr(renderData.rdSplineStartTangent), -10.0f, 10.0f);
+
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(100, 100, 100, 255));
+            ImGui::Text("End Vec ");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::SliderFloat3("##ENDVEC", glm::value_ptr(renderData.rdSplineEndVertex), -10.0f, 10.0f);
+
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(100, 100, 100, 255));
+            ImGui::Text("End Tang ");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::SliderFloat3("##ENDTANG", glm::value_ptr(renderData.rdSplineEndTangent), -10.0f, 10.0f);
+        }
+        ImGui::Unindent();
+    }
+
+
+
 
     if (ImGui::CollapsingHeader("glTF Animation")) {
         ImGui::Checkbox("Play Animation", &renderData.rdPlayAnimation);
@@ -427,11 +528,11 @@ void UserInterface::createFrame(OGLRenderData& renderData) {
             ImGui::Text("Split Node  ");
             ImGui::SameLine();
             if (ImGui::BeginCombo("##SplitNodeCombo",
-                renderData.rdSkelSplitNodeNames.at(renderData.rdSkelSplitNode).c_str())) {
-                for (int i = 0; i < renderData.rdSkelSplitNodeNames.size(); ++i) {
-                    if (renderData.rdSkelSplitNodeNames.at(i).compare("(invalid)") != 0) {
+                renderData.rdSkelNodeNames.at(renderData.rdSkelSplitNode).c_str())) {
+                for (int i = 0; i < renderData.rdSkelNodeNames.size(); ++i) {
+                    if (renderData.rdSkelNodeNames.at(i).compare("(invalid)") != 0) {
                         const bool isSelected = (renderData.rdSkelSplitNode == i);
-                        if (ImGui::Selectable(renderData.rdSkelSplitNodeNames.at(i).c_str(), isSelected)) {
+                        if (ImGui::Selectable(renderData.rdSkelNodeNames.at(i).c_str(), isSelected)) {
                             renderData.rdSkelSplitNode = i;
                         }
 
@@ -444,6 +545,68 @@ void UserInterface::createFrame(OGLRenderData& renderData) {
             }
         }
 
+    }
+    if (ImGui::CollapsingHeader("glTF Inverse Kinematic")) {
+        ImGui::Text("Inverse Kinematics");
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Off",
+            renderData.rdIkMode == ikMode::off)) {
+            renderData.rdIkMode = ikMode::off;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("CCD",
+            renderData.rdIkMode == ikMode::ccd)) {
+            renderData.rdIkMode = ikMode::ccd;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("FABRIK",
+            renderData.rdIkMode == ikMode::fabrik)) {
+            renderData.rdIkMode = ikMode::fabrik;
+        }
+
+        if (renderData.rdIkMode != ikMode::off) {
+            ImGui::Text("IK Iterations  :");
+            ImGui::SameLine();
+            ImGui::SliderInt("##IKITER", &renderData.rdIkIterations, 0, 15, "%d", flags);
+
+            ImGui::Text("Target Position:");
+            ImGui::SameLine();
+            ImGui::SliderFloat3("##IKTargetPOS", glm::value_ptr(renderData.rdIkTargetPos), -10.0f, 10.0f, "%.3f", flags);
+
+            ImGui::Text("Effector Node  :");
+            ImGui::SameLine();
+            if (ImGui::BeginCombo("##EffectorNodeCombo",
+                renderData.rdSkelNodeNames.at(renderData.rdIkEffectorNode).c_str())) {
+                for (int i = 0; i < renderData.rdSkelNodeNames.size(); ++i) {
+                    const bool isSelected = (renderData.rdIkEffectorNode == i);
+                    if (ImGui::Selectable(renderData.rdSkelNodeNames.at(i).c_str(), isSelected)) {
+                        renderData.rdIkEffectorNode = i;
+                    }
+
+                    if (isSelected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            ImGui::Text("IK Root Node   :");
+            ImGui::SameLine();
+            if (ImGui::BeginCombo("##RootNodeCombo",
+                renderData.rdSkelNodeNames.at(renderData.rdIkRootNode).c_str())) {
+                for (int i = 0; i < renderData.rdSkelNodeNames.size(); ++i) {
+                    const bool isSelected = (renderData.rdIkRootNode == i);
+                    if (ImGui::Selectable(renderData.rdSkelNodeNames.at(i).c_str(), isSelected)) {
+                        renderData.rdIkRootNode = i;
+                    }
+
+                    if (isSelected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+        }
     }
 
     ImGui::End();

@@ -99,13 +99,14 @@ class OGLRenderer {
 		Timer mUploadToUBOTimer{};
 		Timer mUIGenerateTimer{};
 		Timer mUIDrawTimer{};
-
+		Timer mIKTimer{};
 		Camera mCamera{};
 
 		UserInterface mUserInterface{};
 
 		CoordArrowsModel mCoordArrowsModel{};
 		OGLMesh mCoordArrowsMesh{};
+		OGLMesh mIKCoordArrowsMesh{};
 
 		ArrowModel mArrowModel{};
 		OGLMesh mStartPosArrowMesh{};
@@ -123,6 +124,7 @@ class OGLRenderer {
 
 		unsigned int mSkeletonLineIndexCount = 0;
 		unsigned int mLineIndexCount = 0;
+		unsigned int mIKCoordArrowsLineIndexCount = 0;
 
 		glm::quat mQuatModelOrientation[2] = { glm::quat() , glm::quat() };
 		glm::quat mQuatModelOrientationConjugate[2] = { glm::quat() , glm::quat() };

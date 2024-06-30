@@ -25,6 +25,9 @@ private:
     std::vector<float> mModelUploadValues{};
     int mNumModelUploadValues = 90;
 
+    std::vector<float> mIKValues{};
+    int mNumIKValues = 90;
+
     std::vector<float> mMatrixGenerationValues{};
     int mNumMatrixGenerationValues = 90;
 

@@ -10,6 +10,7 @@
 #include "GltfNode.h"
 
 #include "../animations/GltfAnimationClip.h"
+#include "../animations/IK/IKSolver.h"
 
 
 class GltfModel {
@@ -47,6 +48,13 @@ public:
 	float getAnimationEndTime(int animNum);
 	std::string getClipName(int animNum);
 
+	void solveIKByCCD(glm::vec3 target);
+	void solveIKByFABRIK(glm::vec3 target);
+
+	void setInverseKinematicsNodes(int effectorNodeNum, int ikChainRootNum);
+	void setNumIKIterations(int iterations);
+
+
 private:
 
 	// pointer to loaded model
@@ -82,6 +90,8 @@ private:
 	// Animation
 	std::vector<GltfAnimationClip> mAnimClips{};
 
+	IKSolver mIKSolver{};
+
 	void createVertexBuffers();
 	void createIndexBuffer();
 
@@ -92,14 +102,17 @@ private:
 	void getWeightData();
 
 	void getNodes(std::shared_ptr<GltfNode> treeNode);
-	void getNodeData(std::shared_ptr<GltfNode> treeNode, glm::mat4 parentNodeMatrix);
-	void updateNodeMatrices(std::shared_ptr<GltfNode> treeNode, glm::mat4 parentNodeMatrix);
+	void getNodeData(std::shared_ptr<GltfNode> treeNode);
+	void updateNodeMatrices(std::shared_ptr<GltfNode> treeNode);
 	void updateJointMatricesAndQuats(std::shared_ptr<GltfNode> treeNode);
 	void getSkeletonPerNode(std::shared_ptr<GltfNode> treeNode, bool enableSkinning);
 
 	void getAnimations();
-	void resetNodeData(std::shared_ptr<GltfNode> treeNode,glm::mat4 parentNodeMatrix);
+	void resetNodeData(std::shared_ptr<GltfNode> treeNode);
 	void updateAdditiveMask(std::shared_ptr<GltfNode> treeNode, int splitNodeNum);
+
+
+
 
 };
 

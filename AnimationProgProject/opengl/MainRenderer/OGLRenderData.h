@@ -37,6 +37,12 @@ enum class blendMode {
 	additive
 };
 
+enum class ikMode {
+	off = 0,
+	ccd,
+	fabrik
+};
+
 struct OGLRenderData {
 
 	// GFLW Window instance
@@ -59,6 +65,8 @@ struct OGLRenderData {
 	float rdUploadToUBOTime = 0.0f;
 	float rdUIGenerateTime = 0.0f;
 	float rdUIDrawTime = 0.0f;
+	float rdIKTime = 0.0f;
+
 
 	// Is the program currently using the second shader
 	bool rdUseChangedShader = false;
@@ -124,6 +132,13 @@ struct OGLRenderData {
 	int rdModelNodeCount = 0;
 	bool rdAdditiveBlending = false;
 	int rdSkelSplitNode = 0;
-	std::vector<std::string> rdSkelSplitNodeNames{};
+	std::vector<std::string> rdSkelNodeNames{};
+
+
+	ikMode rdIkMode = ikMode::off;
+	int rdIkIterations = 10;
+	glm::vec3 rdIkTargetPos = glm::vec3(0.0f, 3.0f, 1.0f);
+	int rdIkEffectorNode = 0;
+	int rdIkRootNode = 0;
 
 };
