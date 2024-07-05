@@ -409,6 +409,30 @@ void GltfModel::draw()
     mTex.unbind();
 }
 
+void GltfModel::drawInstanced(int instanceCount) 
+{
+    const tinygltf::Primitive& primitives = mModel->meshes.at(0).primitives.at(0);
+    const tinygltf::Accessor& indexAccessor = mModel->accessors.at(primitives.indices);
+
+    GLuint drawMode = GL_TRIANGLES;
+    switch (primitives.mode)
+    {
+    case TINYGLTF_MODE_TRIANGLES:
+        drawMode = GL_TRIANGLES;
+        break;
+    default:
+        Logger::log(1, "%s error: unknown draw mode %i\n", __FUNCTION__, primitives.mode);
+        break;
+    }
+
+    mTex.bind();
+    glBindVertexArray(mVAO);
+    glDrawElementsInstanced(drawMode, indexAccessor.count, indexAccessor.componentType, nullptr, instanceCount);
+    glBindVertexArray(0);
+    mTex.unbind();
+}
+
+
 void GltfModel::cleanup() 
 {
     glDeleteBuffers(mVertexVBO.size(), mVertexVBO.data());

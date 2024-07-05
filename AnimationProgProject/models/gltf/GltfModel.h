@@ -21,12 +21,15 @@ struct GltfNodeData {
 
 class GltfModel {
 public:
-    bool loadModel(OGLRenderData& renderData, std::string modelFilename,
-        std::string textureFilename);
+    bool loadModel(OGLRenderData& renderData, std::string modelFilename, std::string textureFilename);
+    
     void draw();
+    void drawInstanced(int instanceCount);
+    
     void cleanup();
 
     std::string getModelFilename();
+
     int getNodeCount();
     GltfNodeData getGltfNodes();
     int getTriangleCount();

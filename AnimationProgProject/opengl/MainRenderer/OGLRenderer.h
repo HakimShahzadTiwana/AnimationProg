@@ -120,7 +120,7 @@ private:
 	std::vector<std::shared_ptr<GltfInstance>> mGltfInstances{};
 	std::vector<std::shared_ptr<GltfInstance>>	mGltfMatrixInstances{};
 	std::vector<std::shared_ptr<GltfInstance>>  mGltfDQInstances{};
-	std::vector<std::shared_ptr<GltfModel>> mGltfModels {};
+	std::shared_ptr<GltfModel> mGltfModel = nullptr;
 
 	std::vector<glm::mat4> mModelJointMatrices{};
 	std::vector<glm::mat2x4> mModelJointDualQuats{};
