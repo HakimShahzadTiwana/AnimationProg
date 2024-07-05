@@ -17,12 +17,14 @@ layout (std430, binding = 2) readonly buffer JointDualQuats {
   mat2x4 jointDQs[];
 };
 
+uniform int aModelStride;
+
 mat2x4 getJointTransform(ivec4 joints, vec4 weights) {
   // read dual quaterions from buffer
-  mat2x4 dq0 = jointDQs[joints.x];
-  mat2x4 dq1 = jointDQs[joints.y];
-  mat2x4 dq2 = jointDQs[joints.z];
-  mat2x4 dq3 = jointDQs[joints.w];
+  mat2x4 dq0 = jointDQs[joints.x + aModelStride];
+  mat2x4 dq1 = jointDQs[joints.y + aModelStride];
+  mat2x4 dq2 = jointDQs[joints.z + aModelStride];
+  mat2x4 dq3 = jointDQs[joints.w + aModelStride];
 
   // shortest rotation
   weights.y *= sign(dot(dq0[0], dq1[0]));
@@ -68,6 +70,7 @@ mat4 skinMat() {
       2.0 * (-t.w * r.z - t.x * r.y + t.y * r.x + t.z * r.w),
       1);
 }
+
 
 void main() {
   gl_Position = projection * view * skinMat() * vec4(aPos, 1.0);

@@ -43,6 +43,23 @@ glm::quat GltfNode::getLocalRotation()
 	return mBlendRotation;
 }
 
+void GltfNode::setWorldPosition(glm::vec3 worldPos)
+{
+	mWorldPosition = worldPos;
+	updateNodeAndChildMatrices();
+}
+
+void GltfNode::setWorldRotation(glm::vec3 worldRot)
+{
+	mWorldRotation = worldRot;
+	updateNodeAndChildMatrices();
+}
+
+glm::vec3 GltfNode::getWorldPosition() 
+{
+	return mWorldPosition;
+}
+
 glm::quat GltfNode::getGlobalRotation()
 {
 	glm::quat orientation;
@@ -120,7 +137,10 @@ void GltfNode::calculateLocalTRSMatrix()
 	glm::mat4 rMatrix = glm::mat4_cast(mBlendRotation);
 	glm::mat4 tMatrix = glm::translate(glm::mat4(1.0f), mBlendTranslation);
 
-	mLocalTRSMatrix = tMatrix * rMatrix * sMatrix;
+	glm::mat4 tWorldMatrix = glm::translate(glm::mat4(1.0f), mWorldPosition);
+	glm::mat4 rWorldMatrix = glm::mat4_cast(glm::quat(glm::vec3(glm::radians(mWorldRotation.x),glm::radians(mWorldRotation.y),glm::radians(mWorldRotation.z))));
+
+	mLocalTRSMatrix = tWorldMatrix * rWorldMatrix * tMatrix * rMatrix * sMatrix;
 }
 
 void GltfNode::calculateNodeMatrix()

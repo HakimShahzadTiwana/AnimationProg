@@ -3,11 +3,12 @@
 #include <vector>
 
 #include "../opengl/mainRenderer/OGLRenderData.h"
+#include "../models/ModelSettings.h"
 
 class UserInterface {
 public:
     void init(OGLRenderData& renderData);
-    void createFrame(OGLRenderData& renderData);
+    void createFrame(OGLRenderData& renderData, ModelSettings& settings);
     void render();
     void cleanup();
 

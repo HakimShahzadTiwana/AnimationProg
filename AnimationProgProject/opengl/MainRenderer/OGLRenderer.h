@@ -35,6 +35,7 @@
 #include "../models/gltf/GltfModel.h"
 
 #include "OGLRenderData.h"
+#include "../../models/gltf/GltfInstance.h"
 
 
 class OGLRenderer {
@@ -116,15 +117,21 @@ class OGLRenderer {
 		SplineModel mSplineModel{};
 		OGLMesh mSplineMesh{};
 
+		std::vector<std::shared_ptr<GltfInstance>> mGltfInstances{};
+
+		std::vector<glm::mat4> mModelJointMatrices{};
+		std::vector<glm::mat2x4> mModelJointDualQuats{};
+
 		std::unique_ptr<Model> mModel = nullptr;
 		std::unique_ptr<OGLMesh> mModelMesh = nullptr;
 		std::unique_ptr<OGLMesh> mAllMeshes = nullptr;
 		std::shared_ptr<GltfModel> mGltfModel = nullptr;
-		std::shared_ptr<OGLMesh> mSkeletonMesh = nullptr;
+		std::shared_ptr<OGLMesh> mLineMesh = nullptr;
 
-		unsigned int mSkeletonLineIndexCount = 0;
+
 		unsigned int mLineIndexCount = 0;
-		unsigned int mIKCoordArrowsLineIndexCount = 0;
+		unsigned int mSkeletonLineIndexCount = 0;
+		unsigned int mCoordArrowsLineIndexCount = 0;
 
 		glm::quat mQuatModelOrientation[2] = { glm::quat() , glm::quat() };
 		glm::quat mQuatModelOrientationConjugate[2] = { glm::quat() , glm::quat() };
@@ -137,11 +144,10 @@ class OGLRenderer {
 
 	
 		bool mMouseLock = false;
-		bool mModelUploadRequired = true;
 		int mMouseXPos = 0;
 		int mMouseYPos = 0;
 		
-		double lastTickTime = 0.0;
+		double mLastTickTime = 0.0;
 
 		
 		

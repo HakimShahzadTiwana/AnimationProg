@@ -35,7 +35,9 @@ public:
 	void setScale(glm::vec3 scale);
 	void setTranslation(glm::vec3 translation);
 	void setRotation(glm::quat rotation);
-
+	void setWorldPosition(glm::vec3 worldPos);
+	void setWorldRotation(glm::vec3 worldPRot);
+	glm::vec3 getWorldPosition();
 
 	// Calculate TRS
 	void calculateLocalTRSMatrix();
@@ -69,6 +71,9 @@ private:
 	glm::vec3 mScale = glm::vec3(1.0f);
 	glm::vec3 mTranslation = glm::vec3(0.0f);
 	glm::quat mRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
+	glm::vec3 mWorldPosition = glm::vec3(0.0f);
+	glm::vec3 mWorldRotation = glm::vec3(0.0f);
 
 	// Blend Data of node
 	glm::vec3 mBlendScale = glm::vec3(1.0f);

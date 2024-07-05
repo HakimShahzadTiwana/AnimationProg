@@ -49,8 +49,8 @@ struct OGLRenderData {
 	GLFWwindow* rdWindow = nullptr;
 
 	// Dimensions of window
-	unsigned int rdWidth = 0;
-	unsigned int rdHeight = 0;
+	 int rdWidth = 0;
+	 int rdHeight = 0;
 
 	// Number of triangles drawn
 	unsigned int rdTriangleCount = 0;
@@ -108,37 +108,7 @@ struct OGLRenderData {
 
 	float rdInterpValue = 0.0f;
 
-
-	skinningMode rdGPUDualQuatVertexSkinning = skinningMode::linear;
-	bool rdDrawSkeleton = true;
-	bool rdDrawGltfModel = true;
-
-
-	bool rdPlayAnimation = true;
-	std::vector<std::string> rdClipNames{};
-	int rdAnimClip = 0;
-	int rdAnimClipSize = 0;
-	float rdAnimSpeed = 1.0f;
-	float rdAnimTimePosition = 0.0f;
-	float rdAnimEndTime = 0.0f;
-
-	replayDirection rdAnimationPlayDirection = replayDirection::forward;
-
-	blendMode rdBlendingMode = blendMode::fadeinout;
-	float rdAnimBlendFactor = 1.0f;
-	int rdCrossBlendDestAnimClip = 0;
-	float rdAnimCrossBlendFactor = 0.0f;
-
-	int rdModelNodeCount = 0;
-	bool rdAdditiveBlending = false;
-	int rdSkelSplitNode = 0;
-	std::vector<std::string> rdSkelNodeNames{};
-
-
-	ikMode rdIkMode = ikMode::off;
-	int rdIkIterations = 10;
-	glm::vec3 rdIkTargetPos = glm::vec3(0.0f, 3.0f, 1.0f);
-	int rdIkEffectorNode = 0;
-	int rdIkRootNode = 0;
+	int rdNumberOfInstances = 0;
+	int rdCurrentSelectedInstance = 0;
 
 };

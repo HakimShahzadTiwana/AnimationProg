@@ -12,13 +12,18 @@ public:
 	// Instructs graphic card to use the shader for draw operation
 	void use();
 
+	bool getUniformLocation(std::string uniformName);
+	void setUniformValue(int value);
+
+
 	// Free created OpenGL shader 
 	void cleanup();
 
 private:
 
 	GLuint mShaderProgram = 0;
-	// 
+	GLint mUniformLocation = -1;
+
 	GLuint readShader(std::string shaderFileNme, GLuint shaderType);
 
 };

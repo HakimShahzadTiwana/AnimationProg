@@ -129,3 +129,25 @@ void Shader::use() {
 
 	glUseProgram(mShaderProgram);
 }
+
+bool Shader::getUniformLocation(std::string uniformName) 
+{
+	if (mShaderProgram > 0)
+	{
+		mUniformLocation = glGetUniformLocation(mShaderProgram, uniformName.c_str());
+		return mUniformLocation > -1;
+	}
+	return false;
+}
+
+void Shader::setUniformValue(int value)
+{
+	if (mShaderProgram > 0) 
+	{
+		if (mUniformLocation > -1)
+		{
+			glUniform1i(mUniformLocation, value);
+		}
+	}
+}
+
