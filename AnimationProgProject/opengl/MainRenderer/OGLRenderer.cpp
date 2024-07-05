@@ -75,35 +75,72 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	glLineWidth(3.0);
-
-
-	mGltfModel = std::make_shared<GltfModel>();
+	mGltfModels.resize(3);
+	mGltfModels.at(0) = std::make_shared<GltfModel>();
 	std::string modelFilename = "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\assets\\Woman.gltf";
 	std::string modelTexFilename = "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Textures\\Woman.png";
-	Logger::log(1, "%s: Gltf model mesh storage initialized\n", __FUNCTION__);
-
-	if (!mGltfModel->loadModel(mRenderData, modelFilename, modelTexFilename)) {
-		Logger::log(0, "%s:Error - Could not load Gltf model from file.\n", __FUNCTION__);
+	if (!mGltfModels.at(0)->loadModel(mRenderData, modelFilename, modelTexFilename)) {
+		Logger::log(1, "%s: loading glTF model '%s' failed\n", __FUNCTION__, modelFilename.c_str());
 		return false;
 	}
-	mGltfModel->uploadVertexBuffers();
-	mGltfModel->uploadIndexBuffer();
-	Logger::log(1, "%s: Gltf model loaded\n", __FUNCTION__);
+	mGltfModels.at(0)->uploadVertexBuffers();
+	mGltfModels.at(0)->uploadIndexBuffer();
+
+	mGltfModels.at(1) = std::make_shared<GltfModel>();
+	modelTexFilename = "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Textures\\Woman2.png";
+	if (!mGltfModels.at(1)->loadModel(mRenderData, modelFilename, modelTexFilename)) {
+		Logger::log(1, "%s: loading glTF model '%s' failed\n", __FUNCTION__, modelFilename.c_str());
+		return false;
+	}
+	mGltfModels.at(1)->uploadVertexBuffers();
+	mGltfModels.at(1)->uploadIndexBuffer();
+
+	mGltfModels.at(2) = std::make_shared<GltfModel>();
+	modelFilename = "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\assets\\dq.gltf";
+	modelTexFilename = "D:\\Github_Repos\\AnimationProg\\AnimationProgProject\\Textures\\dq.png";
+	if (!mGltfModels.at(2)->loadModel(mRenderData, modelFilename, modelTexFilename)) {
+		Logger::log(1, "%s: loading glTF model '%s' failed\n", __FUNCTION__, modelFilename.c_str());
+		return false;
+	}
+	mGltfModels.at(2)->uploadVertexBuffers();
+	mGltfModels.at(2)->uploadIndexBuffer();
+
+	Logger::log(1, "%s: glTF model '%s' succesfully loaded\n", __FUNCTION__, modelFilename.c_str());
+
 
 	int numTriangles = 0;	
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 50; i++)
 	{
 		int xPos = std::rand() % 40 - 20;
 		int zPos = std::rand() % 40 - 20;
-		mGltfInstances.emplace_back(std::make_shared<GltfInstance>(mGltfModel, glm::vec2(static_cast<float>(xPos), static_cast<float>(zPos)), true));
-		numTriangles += mGltfModel->getTriangleCount();
+		int modelNo = std::rand() % 2;
+		mGltfInstances.emplace_back(std::make_shared<GltfInstance>(mGltfModels.at(modelNo), glm::vec2(static_cast<float>(xPos), static_cast<float>(zPos)), true));
+		numTriangles += mGltfModels.at(modelNo)->getTriangleCount();
+	}
+
+	for (int i = 0; i < 25; ++i) {
+		int xPos = std::rand() % 50 - 25;
+		int zPos = std::rand() % 20 - 50;
+		mGltfInstances.emplace_back(std::make_shared<GltfInstance>(mGltfModels.at(2), glm::vec2(static_cast<float>(xPos),static_cast<float>(zPos)), true));
+		numTriangles += mGltfModels.at(2)->getTriangleCount();
 	}
 
 	mRenderData.rdTriangleCount = numTriangles;
 	mRenderData.rdNumberOfInstances = mGltfInstances.size();
 
-	size_t modelJointMatrixBufferSize = mRenderData.rdNumberOfInstances * mGltfInstances.at(0)->getJointMatrixSize() * sizeof(glm::mat4);
-	size_t modelJointDualQuatBufferSize = mRenderData.rdNumberOfInstances * mGltfInstances.at(0)->getJointDualQuatsSize() * sizeof(glm::mat2x4);
+	size_t modelJointMatrixBufferSize = 0;
+	size_t modelJointDualQuatBufferSize = 0;
+	int jointMatrixSize = 0;
+	int jointQuatSize = 0;
+
+
+	for (const auto& instance : mGltfInstances) {
+		jointMatrixSize += instance->getJointMatrixSize();
+		modelJointMatrixBufferSize += instance->getJointMatrixSize() * sizeof(glm::mat4);
+
+		jointQuatSize += instance->getJointDualQuatsSize();
+		modelJointDualQuatBufferSize += instance->getJointDualQuatsSize() * sizeof(glm::mat2x4);
+	}
 
 	mGltfShaderStorageBuffer.init(modelJointMatrixBufferSize);
 	Logger::log(1, "%s: glTF joint matrix uniform buffer (size %i bytes) successfully created\n", __FUNCTION__, modelJointMatrixBufferSize);
@@ -251,14 +288,15 @@ void OGLRenderer::draw() {
 	mModelJointMatrices.clear();
 	mModelJointDualQuats.clear();
 
-	unsigned int matrixInstances = 0;
-	unsigned int dualQuatInstances = 0;
+	mGltfMatrixInstances.clear();
+	mGltfDQInstances.clear();
+
 	unsigned int numTriangles = 0;
 
-	for (const auto& instance : mGltfInstances)
+	for (const auto& instance : mGltfInstances) 
 	{
 		ModelSettings settings = instance->getInstanceSettings();
-		if (!settings.msDrawModel)
+		if (!settings.msDrawModel) 
 		{
 			continue;
 		}
@@ -267,18 +305,16 @@ void OGLRenderer::draw() {
 		{
 			std::vector<glm::mat2x4> quats = instance->getJointDualQuats();
 			mModelJointDualQuats.insert(mModelJointDualQuats.end(), quats.begin(), quats.end());
-			++dualQuatInstances;
+			mGltfDQInstances.emplace_back(instance);
 		}
 		else
 		{
 			std::vector<glm::mat4> mats = instance->getJointMatrices();
 			mModelJointMatrices.insert(mModelJointMatrices.end(), mats.begin(), mats.end());
-			++matrixInstances;
+			mGltfMatrixInstances.emplace_back(instance);
 		}
-
-		numTriangles += mGltfModel->getTriangleCount();
+		numTriangles += instance->getModel()->getTriangleCount();
 	}
-
 	mRenderData.rdTriangleCount = numTriangles;
 
 	mGltfShaderStorageBuffer.uploadSsboData(mModelJointMatrices, 1);
@@ -299,23 +335,22 @@ void OGLRenderer::draw() {
 	unsigned int matrixPos = 0;
 
 	mGltfGPUShader.use();
-	for (int i = 0; i < matrixInstances; ++i)
+	for (const auto& instance : mGltfMatrixInstances) 
 	{
 		/* set position inside the SSBO */
 		mGltfGPUShader.setUniformValue(matrixPos);
-		mGltfModel->draw();
-		matrixPos += jointMatrixSize;
+		instance->getModel()->draw();
+		matrixPos += instance->getJointMatrixSize();
 	}
 
-	unsigned int jointDQSize = mGltfInstances.at(0)->getJointDualQuatsSize();
 	unsigned int dqPos = 0;
 
 	mGltfGPUDualQuatShader.use();
-	for (int i = 0; i < dualQuatInstances; ++i)
+	for (const auto& instance : mGltfDQInstances)
 	{
 		mGltfGPUDualQuatShader.setUniformValue(dqPos);
-		mGltfModel->draw();
-		dqPos += jointDQSize;
+		instance->getModel()->draw();
+		dqPos += instance->getJointDualQuatsSize();
 	}
 
 
@@ -498,8 +533,12 @@ void OGLRenderer::handleMousePositionEvents(double xPos, double yPos)
 void OGLRenderer::cleanup() {
 
 	Logger::log(1, "%s: Cleaning up renderer...\n", __FUNCTION__);
-	mGltfModel->cleanup();
-	mGltfModel.reset();
+
+	for (int i = 0; i < mGltfModels.size(); ++i) 
+	{
+		mGltfModels.at(i)->cleanup();
+		mGltfModels.at(i).reset();
+	}
 
 	mGltfGPUDualQuatShader.cleanup();
 	mGltfGPUShader.cleanup();

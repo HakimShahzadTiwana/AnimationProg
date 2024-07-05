@@ -19,6 +19,8 @@ public:
 
     void resetNodeData();
 
+    std::shared_ptr<GltfModel> getModel();
+
     std::shared_ptr<OGLMesh> getSkeleton();
     void setSkeletonSplitNode(int nodeNum);
 

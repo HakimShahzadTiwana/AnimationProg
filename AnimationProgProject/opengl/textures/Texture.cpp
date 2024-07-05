@@ -22,6 +22,9 @@ bool Texture::loadTexture(std::string textureName,bool flipImage) {
 		stbi_image_free(textureData);
 		return false;
 	}
+
+	glGenTextures(1, &mTex);
+	glBindTexture(GL_TEXTURE_2D, mTex);
 /*
 	// For minification we use tri-linear sampling
 	glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);

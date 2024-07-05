@@ -71,8 +71,7 @@ private:
     GLuint mVAO = 0;
     std::vector<GLuint> mVertexVBO{};
     GLuint mIndexVBO = 0;
-    std::map<std::string, GLint> attributes =
-    { {"POSITION", 0}, {"NORMAL", 1}, {"TEXCOORD_0", 2}, {"JOINTS_0", 3}, {"WEIGHTS_0", 4} };
+    std::map<std::string, GLint> attributes ={ {"POSITION", 0}, {"NORMAL", 1}, {"TEXCOORD_0", 2}, {"JOINTS_0", 3}, {"WEIGHTS_0", 4} };
 
     Texture mTex{};
 };

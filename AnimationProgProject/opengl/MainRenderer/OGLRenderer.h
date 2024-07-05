@@ -40,93 +40,95 @@
 
 class OGLRenderer {
 
-	public:
+public:
 
-		OGLRenderer(GLFWwindow* window);
+	OGLRenderer(GLFWwindow* window);
 
-		// Initialize and create the OpenGL objects we need for drawing
-		// @param width - Width of Renderer
-		// @param height - Height of Renderer
-		bool init(unsigned int width, unsigned int height);
+	// Initialize and create the OpenGL objects we need for drawing
+	// @param width - Width of Renderer
+	// @param height - Height of Renderer
+	bool init(unsigned int width, unsigned int height);
 
-		// Changes dimentsions fo Renderer
-		// @param width - Width of Renderer
-		// @param height - Height of Renderer
-		void setSize(unsigned int width, unsigned int height);
+	// Changes dimentsions fo Renderer
+	// @param width - Width of Renderer
+	// @param height - Height of Renderer
+	void setSize(unsigned int width, unsigned int height);
 
-		// Cleanup of openGl objects 
-		void cleanup();
+	// Cleanup of openGl objects 
+	void cleanup();
 
-		// Store the triangle and texture data from the model
-		// @param vertexData - The model extract the data from
-		void uploadData(OGLMesh vertexData);
+	// Store the triangle and texture data from the model
+	// @param vertexData - The model extract the data from
+	void uploadData(OGLMesh vertexData);
 
-		// Draws triangles to frame buffer
-		void draw();
+	// Draws triangles to frame buffer
+	void draw();
 
-		// Handles keyboard events
-		void handleKeyEvents(int key, int scancode, int action, int mods);
-		void handleMovementKeys();
-
-
-		// Handles mouse events
-		void handleMouseButtonEvents(int button, int action, int mods);
-		void handleMousePositionEvents(double xPos, double yPos);
+	// Handles keyboard events
+	void handleKeyEvents(int key, int scancode, int action, int mods);
+	void handleMovementKeys();
 
 
+	// Handles mouse events
+	void handleMouseButtonEvents(int button, int action, int mods);
+	void handleMousePositionEvents(double xPos, double yPos);
 
-	private:
-	
-		OGLRenderData mRenderData{};
 
-		Shader mBasicShader{};
-		Shader mChangedShader{};
-		Shader mLineShader{};
-		Shader mGltfShader{};
-		Shader mGltfGPUShader{};
-		Shader mGltfGPUDualQuatShader{};
 
-		FrameBuffer mFrameBuffer{};
-		VertexBuffer mVertexBuffer{};
-		UniformBuffer mUniformBuffer{};
-		ShaderStorageBuffer mGltfShaderStorageBuffer{};
-		ShaderStorageBuffer mGltfDualQuatSSBuffer{};
+private:
 
-		Texture mTex{};
+	OGLRenderData mRenderData{};
 
-		Timer mFrameTimer{};
-		Timer mMatrixGenerateTimer{};
-		Timer mUploadToVBOTimer{};
-		Timer mUploadToUBOTimer{};
-		Timer mUIGenerateTimer{};
-		Timer mUIDrawTimer{};
-		Timer mIKTimer{};
-		Camera mCamera{};
+	Shader mBasicShader{};
+	Shader mChangedShader{};
+	Shader mLineShader{};
+	Shader mGltfShader{};
+	Shader mGltfGPUShader{};
+	Shader mGltfGPUDualQuatShader{};
 
-		UserInterface mUserInterface{};
+	FrameBuffer mFrameBuffer{};
+	VertexBuffer mVertexBuffer{};
+	UniformBuffer mUniformBuffer{};
+	ShaderStorageBuffer mGltfShaderStorageBuffer{};
+	ShaderStorageBuffer mGltfDualQuatSSBuffer{};
 
-		CoordArrowsModel mCoordArrowsModel{};
-		OGLMesh mCoordArrowsMesh{};
-		OGLMesh mIKCoordArrowsMesh{};
+	Texture mTex{};
 
-		ArrowModel mArrowModel{};
-		OGLMesh mStartPosArrowMesh{};
-		OGLMesh mEndPosArrowMesh{};
-		OGLMesh mQuatPosArrowMesh{};
+	Timer mFrameTimer{};
+	Timer mMatrixGenerateTimer{};
+	Timer mUploadToVBOTimer{};
+	Timer mUploadToUBOTimer{};
+	Timer mUIGenerateTimer{};
+	Timer mUIDrawTimer{};
+	Timer mIKTimer{};
+	Camera mCamera{};
 
-		SplineModel mSplineModel{};
-		OGLMesh mSplineMesh{};
+	UserInterface mUserInterface{};
 
-		std::vector<std::shared_ptr<GltfInstance>> mGltfInstances{};
+	CoordArrowsModel mCoordArrowsModel{};
+	OGLMesh mCoordArrowsMesh{};
+	OGLMesh mIKCoordArrowsMesh{};
 
-		std::vector<glm::mat4> mModelJointMatrices{};
-		std::vector<glm::mat2x4> mModelJointDualQuats{};
+	ArrowModel mArrowModel{};
+	OGLMesh mStartPosArrowMesh{};
+	OGLMesh mEndPosArrowMesh{};
+	OGLMesh mQuatPosArrowMesh{};
 
-		std::unique_ptr<Model> mModel = nullptr;
-		std::unique_ptr<OGLMesh> mModelMesh = nullptr;
-		std::unique_ptr<OGLMesh> mAllMeshes = nullptr;
-		std::shared_ptr<GltfModel> mGltfModel = nullptr;
-		std::shared_ptr<OGLMesh> mLineMesh = nullptr;
+	SplineModel mSplineModel{};
+	OGLMesh mSplineMesh{};
+
+	std::vector<std::shared_ptr<GltfInstance>> mGltfInstances{};
+	std::vector<std::shared_ptr<GltfInstance>>	mGltfMatrixInstances{};
+	std::vector<std::shared_ptr<GltfInstance>>  mGltfDQInstances{};
+	std::vector<std::shared_ptr<GltfModel>> mGltfModels {};
+
+	std::vector<glm::mat4> mModelJointMatrices{};
+	std::vector<glm::mat2x4> mModelJointDualQuats{};
+
+	std::unique_ptr<Model> mModel = nullptr;
+	std::unique_ptr<OGLMesh> mModelMesh = nullptr;
+	std::unique_ptr<OGLMesh> mAllMeshes = nullptr;
+	std::shared_ptr<OGLMesh> mLineMesh = nullptr;
 
 
 		unsigned int mLineIndexCount = 0;

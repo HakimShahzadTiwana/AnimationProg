@@ -108,6 +108,11 @@ void GltfInstance::resetNodeData()
     updateNodeMatrices(mRootNode);
 }
 
+std::shared_ptr<GltfModel> GltfInstance::getModel()
+{
+    return mGltfModel;
+}
+
 std::shared_ptr<OGLMesh> GltfInstance::getSkeleton() 
 {
     mSkeletonMesh->vertices.clear();
