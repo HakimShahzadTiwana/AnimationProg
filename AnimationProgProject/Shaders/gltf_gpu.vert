@@ -13,17 +13,22 @@ layout (std140, binding = 0) uniform Matrices {
  mat4 projection;
 };
 
-layout (std430, binding = 1) readonly buffer JointMatrices{
- mat4 jointMat[];
-};
+layout (binding = 1) uniform samplerBuffer JointMatrices;
 
 uniform int aModelStride;
 
+mat4 getMatrix(int offset) {
+ return mat4(texelFetch(JointMatrices, offset),
+ texelFetch(JointMatrices, offset + 1),
+ texelFetch(JointMatrices, offset + 2),
+ texelFetch(JointMatrices, offset + 3));
+}
+
 void main() {
-mat4 skinMat = aJointWeight.x * jointMat[int(aJointNum.x) + gl_InstanceID * aModelStride] +
-aJointWeight.y * jointMat[int(aJointNum.y) + gl_InstanceID * aModelStride] +
-aJointWeight.z * jointMat[int(aJointNum.z) + gl_InstanceID * aModelStride] +
-aJointWeight.w * jointMat[int(aJointNum.w) + gl_InstanceID * aModelStride];
+mat4 skinMat = aJointWeight.x * getMatrix((int(aJointNum.x) + gl_InstanceID * aModelStride) * 4) +
+ aJointWeight.y * getMatrix((int(aJointNum.y) + gl_InstanceID * aModelStride) * 4) +
+ aJointWeight.z * getMatrix((int(aJointNum.z) + gl_InstanceID * aModelStride) * 4) +
+ aJointWeight.w * getMatrix((int(aJointNum.w) + gl_InstanceID * aModelStride) * 4);
 
  gl_Position = projection * view * skinMat * vec4(aPos, 1.0);
  normal = aNormal;

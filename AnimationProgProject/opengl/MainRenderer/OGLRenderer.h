@@ -36,6 +36,7 @@
 
 #include "OGLRenderData.h"
 #include "../../models/gltf/GltfInstance.h"
+#include <buffers/textureBuffer/TextureBuffer.h>
 
 
 class OGLRenderer {
@@ -89,7 +90,8 @@ private:
 	FrameBuffer mFrameBuffer{};
 	VertexBuffer mVertexBuffer{};
 	UniformBuffer mUniformBuffer{};
-	ShaderStorageBuffer mGltfShaderStorageBuffer{};
+	TextureBuffer mGltfTextureBuffer{};
+	//ShaderStorageBuffer mGltfShaderStorageBuffer{};
 	ShaderStorageBuffer mGltfDualQuatSSBuffer{};
 
 	Texture mTex{};
@@ -131,25 +133,25 @@ private:
 	std::shared_ptr<OGLMesh> mLineMesh = nullptr;
 
 
-		unsigned int mLineIndexCount = 0;
-		unsigned int mSkeletonLineIndexCount = 0;
-		unsigned int mCoordArrowsLineIndexCount = 0;
+	unsigned int mLineIndexCount = 0;
+	unsigned int mSkeletonLineIndexCount = 0;
+	unsigned int mCoordArrowsLineIndexCount = 0;
 
-		glm::quat mQuatModelOrientation[2] = { glm::quat() , glm::quat() };
-		glm::quat mQuatModelOrientationConjugate[2] = { glm::quat() , glm::quat() };
-		glm::quat mQuatMix = glm::quat();
-		glm::quat mQuatMixConjugate = glm::quat();
+	glm::quat mQuatModelOrientation[2] = { glm::quat() , glm::quat() };
+	glm::quat mQuatModelOrientationConjugate[2] = { glm::quat() , glm::quat() };
+	glm::quat mQuatMix = glm::quat();
+	glm::quat mQuatMixConjugate = glm::quat();
 
 
-		glm::mat4 mViewMatrix = glm::mat4(1.0f);
-		glm::mat4 mProjectionMatrix = glm::mat4(1.0f);
+	glm::mat4 mViewMatrix = glm::mat4(1.0f);
+	glm::mat4 mProjectionMatrix = glm::mat4(1.0f);
 
 	
-		bool mMouseLock = false;
-		int mMouseXPos = 0;
-		int mMouseYPos = 0;
+	bool mMouseLock = false;
+	int mMouseXPos = 0;
+	int mMouseYPos = 0;
 		
-		double mLastTickTime = 0.0;
+	double mLastTickTime = 0.0;
 
 		
 		

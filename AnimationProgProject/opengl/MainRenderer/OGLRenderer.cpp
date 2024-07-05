@@ -119,7 +119,7 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 		modelJointDualQuatBufferSize += instance->getJointDualQuatsSize() * sizeof(glm::mat2x4);
 	}
 
-	mGltfShaderStorageBuffer.init(modelJointMatrixBufferSize);
+	mGltfTextureBuffer.init(modelJointMatrixBufferSize);
 	Logger::log(1, "%s: glTF joint matrix uniform buffer (size %i bytes) successfully created\n", __FUNCTION__, modelJointMatrixBufferSize);
 
 	mGltfDualQuatSSBuffer.init(modelJointDualQuatBufferSize);
@@ -292,7 +292,7 @@ void OGLRenderer::draw() {
 
 	mRenderData.rdTriangleCount = numTriangles;
 
-	mGltfShaderStorageBuffer.uploadSsboData(mModelJointMatrices, 1);
+	mGltfTextureBuffer.uploadTboData(mModelJointMatrices, 1);
 	mGltfDualQuatSSBuffer.uploadSsboData(mModelJointDualQuats, 2);
 	mRenderData.rdUploadToUBOTime = mUploadToUBOTimer.stop();
 
@@ -311,6 +311,8 @@ void OGLRenderer::draw() {
 
 	/* draw the glTF models */
 	mGltfGPUShader.use();
+	mGltfTextureBuffer.bind();
+
 	/* set SSBO stride, identical for ALL models */
 	mGltfGPUShader.setUniformValue(mGltfInstances.at(0)->getJointMatrixSize());
 	mGltfModel->drawInstanced(matrixInstances);
@@ -516,7 +518,7 @@ void OGLRenderer::cleanup() {
 	mUserInterface.cleanup();
 	mLineShader.cleanup();
 	mVertexBuffer.cleanup();
-	mGltfShaderStorageBuffer.cleanup();
+	mGltfTextureBuffer.cleanup();
 	mGltfDualQuatSSBuffer.cleanup();
 	mUniformBuffer.cleanup();
 	mFrameBuffer.cleanup();
