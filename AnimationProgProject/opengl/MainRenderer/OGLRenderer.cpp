@@ -92,7 +92,7 @@ bool OGLRenderer::init(unsigned int width, unsigned int height) {
 
 
 	int numTriangles = 0;	
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 1; i++)
 	{
 		int xPos = std::rand() % 40 - 20;
 		int zPos = std::rand() % 40 - 20;
